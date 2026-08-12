@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bot Geda Bingo</title>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #18002f, #4b0082);
+      color: white;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .logo {
+      text-align: center;
+      font-size: 42px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #ddd;
+      margin-bottom: 25px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.10);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 18px;
+      backdrop-filter: blur(10px);
+    }
+
+    .game-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .info {
+      text-align: center;
+    }
+
+    .info strong {
+      display: block;
+      font-size: 22px;
+    }
+
+    button {
+      width: 100%;
+      border: none;
+      padding: 15px;
+      border-radius: 14px;
+      background: linear-gradient(90deg, #ffb300, #ff6f00);
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .menu {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .menu button {
+      background: rgba(255,255,255,0.12);
+      font-size: 15px;
+    }
+
+    #game {
+      display: none;
+    }
+
+    .bingo-title {
+      text-align: center;
+      font-size: 28px;
+      margin-bottom: 15px;
+    }
+
+    .bingo-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+    }
+
+    .letter {
+      background: #ffb300;
+      color: #35105e;
+      font-weight: bold;
+      text-align: center;
+      padding: 10px 0;
+      border-radius: 6px;
+    }
+
+    .number {
+      background: white;
+      color: #251039;
+      text-align: center;
+      padding: 13px 0;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .free {
+      background: #ffb300;
+    }
+
+    .back {
+      margin-top: 15px;
+      background: #6a1b9a;
+    }
+
+    .footer {
+      text-align: center;
+      color: #bbb;
+      font-size: 13px;
+      margin-top: 25px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- HOME -->
+  <div id="home">
+
+    <div class="logo">🎱 BOT GEDA</div>
+
+    <div class="subtitle">
+      Play Bingo directly inside Telegram
+    </div>
+
+    <div class="card">
+
+      <h2>🎮 Next Bingo Game</h2>
+
+      <div class="game-info">
+
+        <div class="info">
+          <strong>24</strong>
+          Players
+        </div>
+
+        <div class="info">
+          <strong>19:30</strong>
+          Starts
+        </div>
+
+      </div>
+
+      <button onclick="playBingo()">
+        🎮 PLAY BINGO
+      </button>
+
+    </div>
+
+    <div class="menu">
+
+      <button onclick="showMessage('🏆 Leaderboard coming soon!')">
+        🏆 Leaderboard
+      </button>
+
+      <button onclick="showMessage('📜 Your game history will appear here.')">
+        📜 My History
+      </button>
+
+      <button onclick="showMessage('👤 Your Telegram profile.')">
+        👤 Profile
+      </button>
+
+      <button onclick="showMessage('❓ Bingo instructions coming soon.')">
+        ❓ How to Play
+      </button>
+
+    </div>
+
+    <div class="footer">
+      Bot Geda • Fast • Fun • Fair
+    </div>
+
+  </div>
+
+
+  <!-- GAME -->
+  <div id="game">
+
+    <div class="bingo-title">
+      🎱 BINGO
+    </div>
+
+    <div class="card">
+
+      <div class="bingo-grid">
+
+        <div class="letter">B</div>
+        <div class="letter">I</div>
+        <div class="letter">N</div>
+        <div class="letter">G</div>
+        <div class="letter">O</div>
+
+        <div class="number">7</div>
+        <div class="number">18</div>
+        <div class="number">34</div>
+        <div class="number">49</div>
+        <div class="number">63</div>
+
+        <div class="number">12</div>
+        <div class="number">22</div>
+        <div class="number">37</div>
+        <div class="number">55</div>
+        <div class="number">71</div>
+
+        <div class="number">3</div>
+        <div class="number">28</div>
+        <div class="number free">⭐</div>
+        <div class="number">51</div>
+        <div class="number">69</div>
+
+        <div class="number">10</div>
+        <div class="number">17</div>
+        <div class="number">33</div>
+        <div class="number">58</div>
+        <div class="number">72</div>
+
+        <div class="number">6</div>
+        <div class="number">25</div>
+        <div class="number">40</div>
+        <div class="number">57</div>
+        <div class="number">66</div>
+
+      </div>
+
+    </div>
+
+    <button onclick="showMessage('🎉 Bingo verification will be connected to the server next!')">
+      🏆 BINGO!
+    </button>
+
+    <button class="back" onclick="goHome()">
+      ← Back
+    </button>
+
+  </div>
+
+</div>
+
+
+<script>
+
+  const tg = window.Telegram.WebApp;
+
+  tg.ready();
+  tg.expand();
+
+  function playBingo() {
+    document.getElementById("home").style.display = "none";
+    document.getElementById("game").style.display = "block";
+  }
+
+  function goHome() {
+    document.getElementById("game").style.display = "none";
+    document.getElementById("home").style.display = "block";
+  }
+
+  function showMessage(message) {
+    if (tg.showAlert) {
+      tg.showAlert(message);
+    } else {
+      alert(message);
+    }
+  }
+
+</script>
+
+</body>
+</html>
