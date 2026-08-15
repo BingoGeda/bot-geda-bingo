@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 10000;
 
 
 // ========================================
-// SERVE BINGO GEDA MINI APP
+// SERVE MINI APP
 // ========================================
 
 app.use(express.static(__dirname));
@@ -25,93 +25,204 @@ const games = {};
 
 
 // ========================================
+// CREATE ROOM CODE
+// ========================================
+
+function generateRoomCode() {
+
+  const chars =
+    "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+  let code = "";
+
+  do {
+
+    code = "";
+
+    for (let i = 0; i < 6; i++) {
+
+      code +=
+        chars[
+          Math.floor(
+            Math.random() * chars.length
+          )
+        ];
+
+    }
+
+  } while (games[code]);
+
+  return code;
+}
+
+
+// ========================================
+// SHUFFLE
+// ========================================
+
+function shuffle(array) {
+
+  const result =
+    [...array];
+
+  for (
+    let i = result.length - 1;
+    i > 0;
+    i--
+  ) {
+
+    const j =
+      Math.floor(
+        Math.random() * (i + 1)
+      );
+
+    [
+      result[i],
+      result[j]
+    ] =
+    [
+      result[j],
+      result[i]
+    ];
+
+  }
+
+  return result;
+}
+
+
+// ========================================
 // CREATE BINGO CARD
 // ========================================
 
 function createBingoCard() {
 
-  const card = [];
+  const columns = [
 
-  const ranges = [
-    [1, 15],
-    [16, 30],
-    [31, 45],
-    [46, 60],
-    [61, 75]
+    shuffle(
+      Array.from(
+        { length: 15 },
+        (_, i) => i + 1
+      )
+    ).slice(0, 5),
+
+    shuffle(
+      Array.from(
+        { length: 15 },
+        (_, i) => i + 16
+      )
+    ).slice(0, 5),
+
+    shuffle(
+      Array.from(
+        { length: 15 },
+        (_, i) => i + 31
+      )
+    ).slice(0, 5),
+
+    shuffle(
+      Array.from(
+        { length: 15 },
+        (_, i) => i + 46
+      )
+    ).slice(0, 5),
+
+    shuffle(
+      Array.from(
+        { length: 15 },
+        (_, i) => i + 61
+      )
+    ).slice(0, 5)
+
   ];
 
-  for (let column = 0; column < 5; column++) {
 
-    let numbers = [];
+  const card = [];
+
+
+  for (let row = 0; row < 5; row++) {
 
     for (
-      let number = ranges[column][0];
-      number <= ranges[column][1];
-      number++
+      let column = 0;
+      column < 5;
+      column++
     ) {
-      numbers.push(number);
-    }
 
-    // Shuffle numbers
-    numbers.sort(() => Math.random() - 0.5);
-
-    for (let row = 0; row < 5; row++) {
-
-      if (column === 2 && row === 2) {
+      if (
+        row === 2 &&
+        column === 2
+      ) {
 
         card.push("FREE");
 
       } else {
 
-        card.push(numbers[row]);
+        card.push(
+          columns[column][row]
+        );
 
       }
 
     }
+
   }
 
 
-  // Convert columns to rows
-  const finalCard = [];
-
-  for (let row = 0; row < 5; row++) {
-
-    for (let column = 0; column < 5; column++) {
-
-      finalCard.push(
-        card[column * 5 + row]
-      );
-
-    }
-  }
-
-  return finalCard;
+  return card;
 }
 
 
 // ========================================
-// CREATE NEW GAME
+// CREATE GAME
 // ========================================
 
-function createNewGame() {
+function createGame(
+  hostUser
+) {
 
-  const id = Date.now().toString();
+  const roomCode =
+    generateRoomCode();
+
+
+  const hostId =
+    String(
+      hostUser.id ||
+      "guest-" + Date.now()
+    );
+
 
   const game = {
 
-    id: id,
+    id:
+      Date.now().toString(),
+
+    roomCode:
+
+      roomCode,
+
+    hostId:
+
+      hostId,
 
     calledNumbers: [],
 
-    status: "waiting",
+    status:
+      "waiting",
 
     players: {},
 
-    createdAt: new Date().toISOString()
+    winner:
+      null,
+
+    createdAt:
+      new Date().toISOString()
 
   };
 
-  games[id] = game;
+
+  games[roomCode] =
+    game;
+
 
   return game;
 }
@@ -121,181 +232,55 @@ function createNewGame() {
 // GET GAME
 // ========================================
 
-function getGame(id) {
+function getGame(
+  roomCode
+) {
 
-  return games[id];
+  if (!roomCode) {
+
+    return null;
+
+  }
+
+
+  return games[
+    String(roomCode)
+      .trim()
+      .toUpperCase()
+  ] || null;
 
 }
 
 
 // ========================================
-// HOME / MINI APP
+// ADD PLAYER
 // ========================================
 
-app.get("/", (req, res) => {
+function addPlayer(
+  game,
+  user
+) {
 
-  res.sendFile(
-    path.join(__dirname, "index.html")
-  );
-
-});
-
-
-// ========================================
-// HEALTH CHECK
-// ========================================
-
-app.get("/api/health", (req, res) => {
-
-  res.json({
-
-    success: true,
-
-    status: "OK",
-
-    server: "Bingo Geda",
-
-    time: new Date().toISOString()
-
-  });
-
-});
-
-
-// ========================================
-// GET CURRENT GAME
-// ========================================
-
-app.get("/api/game", (req, res) => {
-
-  let game = Object.values(games)[0];
-
-  if (!game) {
-
-    game = createNewGame();
-
-  }
-
-  res.json({
-
-    success: true,
-
-    game: game
-
-  });
-
-});
-
-
-// ========================================
-// CREATE GAME
-// ========================================
-
-app.post("/api/game/create", (req, res) => {
-
-  const game = createNewGame();
-
-  res.json({
-
-    success: true,
-
-    message: "🎱 Bingo game created!",
-
-    game: game
-
-  });
-
-});
-
-
-// ========================================
-// GET GAME BY ID
-// ========================================
-
-app.get("/api/game/:id", (req, res) => {
-
-  const game =
-    getGame(req.params.id);
-
-  if (!game) {
-
-    return res.status(404).json({
-
-      success: false,
-
-      message: "Game not found."
-
-    });
-
-  }
-
-  res.json({
-
-    success: true,
-
-    game: game
-
-  });
-
-});
-
-
-// ========================================
-// JOIN GAME
-// ========================================
-
-app.post("/api/game/:id/join", (req, res) => {
-
-  const game =
-    getGame(req.params.id);
-
-  if (!game) {
-
-    return res.status(404).json({
-
-      success: false,
-
-      message: "Game not found."
-
-    });
-
-  }
-
-
-  const user =
-    req.body.user || {};
-
-
-  const userId =
+  const playerId =
     String(
       user.id ||
       "guest-" + Date.now()
     );
 
 
-  // Player already joined
-  if (game.players[userId]) {
+  if (
+    game.players[playerId]
+  ) {
 
-    return res.json({
-
-      success: true,
-
-      message: "Player already joined.",
-
-      player:
-        game.players[userId],
-
-      game: game
-
-    });
+    return game.players[playerId];
 
   }
 
 
-  // Create player
   const player = {
 
-    id: userId,
+    id:
+      playerId,
 
     name:
       user.first_name ||
@@ -308,312 +293,129 @@ app.post("/api/game/:id/join", (req, res) => {
     card:
       createBingoCard(),
 
+    markedNumbers: [],
+
     joinedAt:
       new Date().toISOString()
 
   };
 
 
-  game.players[userId] =
+  game.players[playerId] =
     player;
 
 
-  game.status =
-    "playing";
-
-
-  res.json({
-
-    success: true,
-
-    message:
-      "🎮 Player joined Bingo Geda!",
-
-    player: player,
-
-    game: game
-
-  });
-
-});
-
-
-// ========================================
-// CALL NEXT BINGO NUMBER
-// ========================================
-
-app.post("/api/game/:id/call", (req, res) => {
-
-  const game =
-    getGame(req.params.id);
-
-
-  if (!game) {
-
-    return res.status(404).json({
-
-      success: false,
-
-      message: "Game not found."
-
-    });
-
-  }
-
-
   if (
-    game.status === "finished"
-  ) {
-
-    return res.status(400).json({
-
-      success: false,
-
-      message:
-        "Game is already finished."
-
-    });
-
-  }
-
-
-  const availableNumbers =
-    Array.from(
-      { length: 75 },
-      (_, index) => index + 1
-    )
-    .filter(
-      number =>
-        !game.calledNumbers.includes(number)
-    );
-
-
-  if (
-    availableNumbers.length === 0
+    Object.keys(
+      game.players
+    ).length > 0
   ) {
 
     game.status =
-      "finished";
-
-
-    return res.json({
-
-      success: false,
-
-      message:
-        "All Bingo numbers have been called.",
-
-      game: game
-
-    });
+      "playing";
 
   }
 
 
-  const randomIndex =
-    Math.floor(
-      Math.random() *
-      availableNumbers.length
-    );
+  return player;
+}
 
 
-  const number =
-    availableNumbers[randomIndex];
+// ========================================
+// HOME
+// ========================================
 
+app.get("/", (req, res) => {
 
-  game.calledNumbers.push(
-    number
+  res.sendFile(
+    path.join(
+      __dirname,
+      "index.html"
+    )
   );
 
-
-  game.status =
-    "playing";
-
-
-  res.json({
-
-    success: true,
-
-    number: number,
-
-    calledNumbers:
-      game.calledNumbers,
-
-    game: game
-
-  });
-
 });
 
 
 // ========================================
-// START NEW GAME
+// HEALTH
 // ========================================
 
-app.post("/api/game/new", (req, res) => {
+app.get(
+  "/api/health",
+  (req, res) => {
 
-  const game =
-    createNewGame();
+    res.json({
 
+      success:
+        true,
 
-  res.json({
+      status:
+        "OK",
 
-    success: true,
+      server:
+        "Bingo Geda",
 
-    message:
-      "🎱 New Bingo game created!",
-
-    game: game
-
-  });
-
-});
-
-
-// ========================================
-// LEGACY JOIN
-// ========================================
-
-app.post("/api/game/join", (req, res) => {
-
-  let game =
-    Object.values(games)[0];
-
-
-  if (!game) {
-
-    game =
-      createNewGame();
-
-  }
-
-
-  const user =
-    req.body.user || {};
-
-
-  const userId =
-    String(
-      user.id ||
-      "guest-" + Date.now()
-    );
-
-
-  if (!game.players[userId]) {
-
-    game.players[userId] = {
-
-      id: userId,
-
-      name:
-        user.first_name ||
-        "Guest",
-
-      username:
-        user.username ||
-        "",
-
-      card:
-        createBingoCard(),
-
-      joinedAt:
+      time:
         new Date().toISOString()
 
-    };
-
-  }
-
-
-  game.status =
-    "playing";
-
-
-  res.json({
-
-    success: true,
-
-    message:
-      "🎮 Player joined Bingo Geda!",
-
-    player:
-      game.players[userId],
-
-    players:
-      Object.keys(game.players).length,
-
-    game:
-      game
-
-  });
-
-});
-
-
-// ========================================
-// LEGACY CALL
-// ========================================
-
-app.post("/api/game/call", (req, res) => {
-
-  let game =
-    Object.values(games)[0];
-
-
-  if (!game) {
-
-    return res.status(404).json({
-
-      success: false,
-
-      message:
-        "No active game."
-
     });
 
   }
+);
 
 
-  if (
-    game.status === "finished"
-  ) {
+// ========================================
+// GET DEFAULT GAME
+// ========================================
 
-    return res.status(400).json({
+app.get(
+  "/api/game",
+  (req, res) => {
 
-      success: false,
+    const roomCode =
+      req.query.room;
 
-      message:
-        "Game is already finished."
-
-    });
-
-  }
+    let game;
 
 
-  const availableNumbers =
-    Array.from(
-      { length: 75 },
-      (_, index) => index + 1
-    )
-    .filter(
-      number =>
-        !game.calledNumbers.includes(number)
-    );
+    if (roomCode) {
+
+      game =
+        getGame(roomCode);
+
+    } else {
+
+      const rooms =
+        Object.values(games);
+
+      game =
+        rooms.length
+          ? rooms[rooms.length - 1]
+          : null;
+
+    }
 
 
-  if (
-    availableNumbers.length === 0
-  ) {
+    if (!game) {
 
-    game.status =
-      "finished";
+      return res.status(404).json({
+
+        success:
+          false,
+
+        message:
+          "No active game."
+
+      });
+
+    }
 
 
-    return res.json({
+    res.json({
 
-      success: false,
-
-      message:
-        "All Bingo numbers have been called.",
+      success:
+        true,
 
       game:
         game
@@ -621,53 +423,578 @@ app.post("/api/game/call", (req, res) => {
     });
 
   }
+);
 
 
-  const randomIndex =
-    Math.floor(
-      Math.random() *
-      availableNumbers.length
+// ========================================
+// CREATE GAME
+// ========================================
+
+app.post(
+  "/api/game/create",
+  (req, res) => {
+
+    const user =
+      req.body.user || {};
+
+
+    const game =
+      createGame(user);
+
+
+    const player =
+      addPlayer(
+        game,
+        user
+      );
+
+
+    res.json({
+
+      success:
+        true,
+
+      message:
+        "🎱 Bingo room created!",
+
+      roomCode:
+        game.roomCode,
+
+      player:
+        player,
+
+      game:
+        game
+
+    });
+
+  }
+);
+
+
+// ========================================
+// JOIN BY ROOM CODE
+// ========================================
+
+app.post(
+  "/api/game/join",
+  (req, res) => {
+
+    const roomCode =
+      req.body.roomCode;
+
+
+    const user =
+      req.body.user || {};
+
+
+    const game =
+      getGame(roomCode);
+
+
+    if (!game) {
+
+      return res.status(404).json({
+
+        success:
+          false,
+
+        message:
+          "Room not found. Check the room code."
+
+      });
+
+    }
+
+
+    if (
+      game.status ===
+      "finished"
+    ) {
+
+      return res.status(400).json({
+
+        success:
+          false,
+
+        message:
+          "This game has finished."
+
+      });
+
+    }
+
+
+    const player =
+      addPlayer(
+        game,
+        user
+      );
+
+
+    res.json({
+
+      success:
+        true,
+
+      message:
+        "🎮 Joined Bingo Geda room!",
+
+      roomCode:
+        game.roomCode,
+
+      player:
+        player,
+
+      game:
+        game
+
+    });
+
+  }
+);
+
+
+// ========================================
+// JOIN BY GAME ID
+// ========================================
+
+app.post(
+  "/api/game/:id/join",
+  (req, res) => {
+
+    const user =
+      req.body.user || {};
+
+
+    const game =
+      Object.values(games)
+        .find(
+          item =>
+            item.id ===
+            String(
+              req.params.id
+            )
+        );
+
+
+    if (!game) {
+
+      return res.status(404).json({
+
+        success:
+          false,
+
+        message:
+          "Game not found."
+
+      });
+
+    }
+
+
+    const player =
+      addPlayer(
+        game,
+        user
+      );
+
+
+    res.json({
+
+      success:
+        true,
+
+      message:
+        "🎮 Player joined!",
+
+      roomCode:
+        game.roomCode,
+
+      player:
+        player,
+
+      game:
+        game
+
+    });
+
+  }
+);
+
+
+// ========================================
+// GET GAME BY ID
+// ========================================
+
+app.get(
+  "/api/game/:id",
+  (req, res) => {
+
+    const game =
+      Object.values(games)
+        .find(
+          item =>
+            item.id ===
+            String(
+              req.params.id
+            )
+        );
+
+
+    if (!game) {
+
+      return res.status(404).json({
+
+        success:
+          false,
+
+        message:
+          "Game not found."
+
+      });
+
+    }
+
+
+    res.json({
+
+      success:
+        true,
+
+      game:
+        game
+
+    });
+
+  }
+);
+
+
+// ========================================
+// CALL NEXT NUMBER
+// ========================================
+
+app.post(
+  "/api/game/:id/call",
+  (req, res) => {
+
+    const game =
+      Object.values(games)
+        .find(
+          item =>
+            item.id ===
+            String(
+              req.params.id
+            )
+        );
+
+
+    if (!game) {
+
+      return res.status(404).json({
+
+        success:
+          false,
+
+        message:
+          "Game not found."
+
+      });
+
+    }
+
+
+    const user =
+      req.body.user || {};
+
+
+    const callerId =
+      String(
+        user.id || ""
+      );
+
+
+    // Only host can call
+    if (
+      callerId &&
+      callerId !==
+      String(game.hostId)
+    ) {
+
+      return res.status(403).json({
+
+        success:
+          false,
+
+        message:
+          "Only the game host can call numbers."
+
+      });
+
+    }
+
+
+    if (
+      game.status ===
+      "finished"
+    ) {
+
+      return res.status(400).json({
+
+        success:
+          false,
+
+        message:
+          "Game is already finished."
+
+      });
+
+    }
+
+
+    const available =
+      Array.from(
+        { length: 75 },
+        (_, i) => i + 1
+      )
+      .filter(
+        number =>
+          !game.calledNumbers
+            .includes(number)
+      );
+
+
+    if (
+      available.length === 0
+    ) {
+
+      game.status =
+        "finished";
+
+
+      return res.json({
+
+        success:
+          false,
+
+        message:
+          "All numbers have been called.",
+
+        game:
+          game
+
+      });
+
+    }
+
+
+    const number =
+      available[
+        Math.floor(
+          Math.random() *
+          available.length
+        )
+      ];
+
+
+    game.calledNumbers.push(
+      number
     );
 
 
-  const number =
-    availableNumbers[randomIndex];
+    game.status =
+      "playing";
 
 
-  game.calledNumbers.push(
-    number
-  );
+    res.json({
+
+      success:
+        true,
+
+      number:
+        number,
+
+      calledNumbers:
+        game.calledNumbers,
+
+      game:
+        game
+
+    });
+
+  }
+);
 
 
-  game.status =
-    "playing";
+// ========================================
+// MARK NUMBER
+// ========================================
+
+app.post(
+  "/api/game/:id/mark",
+  (req, res) => {
+
+    const game =
+      Object.values(games)
+        .find(
+          item =>
+            item.id ===
+            String(
+              req.params.id
+            )
+        );
 
 
-  res.json({
+    if (!game) {
 
-    success: true,
+      return res.status(404).json({
 
-    number: number,
+        success:
+          false,
 
-    calledNumbers:
-      game.calledNumbers,
+        message:
+          "Game not found."
 
-    game:
-      game
+      });
 
-  });
+    }
 
-});
+
+    const user =
+      req.body.user || {};
+
+
+    const number =
+      req.body.number;
+
+
+    const playerId =
+      String(
+        user.id || ""
+      );
+
+
+    const player =
+      game.players[playerId];
+
+
+    if (!player) {
+
+      return res.status(404).json({
+
+        success:
+          false,
+
+        message:
+          "Player is not in this game."
+
+      });
+
+    }
+
+
+    if (
+      number !==
+      "FREE" &&
+      !game.calledNumbers
+        .includes(
+          Number(number)
+        )
+    ) {
+
+      return res.status(400).json({
+
+        success:
+          false,
+
+        message:
+          "That number has not been called yet."
+
+      });
+
+    }
+
+
+    if (
+      !player.markedNumbers
+        .includes(number)
+    ) {
+
+      player.markedNumbers.push(
+        number
+      );
+
+    }
+
+
+    res.json({
+
+      success:
+        true,
+
+      markedNumbers:
+        player.markedNumbers,
+
+      player:
+        player,
+
+      game:
+        game
+
+    });
+
+  }
+);
+
+
+// ========================================
+// START NEW GAME
+// ========================================
+
+app.post(
+  "/api/game/new",
+  (req, res) => {
+
+    const user =
+      req.body.user || {};
+
+
+    const game =
+      createGame(user);
+
+
+    const player =
+      addPlayer(
+        game,
+        user
+      );
+
+
+    res.json({
+
+      success:
+        true,
+
+      roomCode:
+        game.roomCode,
+
+      player:
+        player,
+
+      game:
+        game
+
+    });
+
+  }
+);
 
 
 // ========================================
 // SERVER START
 // ========================================
 
-app.listen(PORT, () => {
-
-  console.log(
-    `🎱 Bingo Geda Multiplayer Server running on port ${PORT}`
-  );
-
-});
+app.listen(
+  PORT,
+  ()
