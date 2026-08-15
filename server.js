@@ -9,8 +9,9 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 10000;
 
+
 // ========================================
-// SERVE MINI APP
+// SERVE BINGO GEDA MINI APP
 // ========================================
 
 app.use(express.static(__dirname));
@@ -24,7 +25,7 @@ const games = {};
 
 
 // ========================================
-// CREATE UNIQUE BINGO CARD
+// CREATE BINGO CARD
 // ========================================
 
 function createBingoCard() {
@@ -41,7 +42,7 @@ function createBingoCard() {
 
   for (let column = 0; column < 5; column++) {
 
-    const numbers = [];
+    let numbers = [];
 
     for (
       let number = ranges[column][0];
@@ -51,7 +52,7 @@ function createBingoCard() {
       numbers.push(number);
     }
 
-    // Shuffle
+    // Shuffle numbers
     numbers.sort(() => Math.random() - 0.5);
 
     for (let row = 0; row < 5; row++) {
@@ -67,10 +68,10 @@ function createBingoCard() {
       }
 
     }
-
   }
 
-  // Convert column-based array to row-based Bingo card
+
+  // Convert columns to rows
   const finalCard = [];
 
   for (let row = 0; row < 5; row++) {
@@ -82,7 +83,6 @@ function createBingoCard() {
       );
 
     }
-
   }
 
   return finalCard;
@@ -90,16 +90,14 @@ function createBingoCard() {
 
 
 // ========================================
-// CREATE GAME
+// CREATE NEW GAME
 // ========================================
 
 function createNewGame() {
 
-  const id =
-    Date.now().toString();
+  const id = Date.now().toString();
 
-
-  games[id] = {
+  const game = {
 
     id: id,
 
@@ -113,9 +111,9 @@ function createNewGame() {
 
   };
 
+  games[id] = game;
 
-  return games[id];
-
+  return game;
 }
 
 
@@ -131,7 +129,7 @@ function getGame(id) {
 
 
 // ========================================
-// HOME
+// HOME / MINI APP
 // ========================================
 
 app.get("/", (req, res) => {
@@ -144,7 +142,7 @@ app.get("/", (req, res) => {
 
 
 // ========================================
-// HEALTH
+// HEALTH CHECK
 // ========================================
 
 app.get("/api/health", (req, res) => {
@@ -165,22 +163,18 @@ app.get("/api/health", (req, res) => {
 
 
 // ========================================
-// GET DEFAULT GAME
+// GET CURRENT GAME
 // ========================================
 
 app.get("/api/game", (req, res) => {
 
-  let game =
-    Object.values(games)[0];
-
+  let game = Object.values(games)[0];
 
   if (!game) {
 
-    game =
-      createNewGame();
+    game = createNewGame();
 
   }
-
 
   res.json({
 
@@ -199,16 +193,13 @@ app.get("/api/game", (req, res) => {
 
 app.post("/api/game/create", (req, res) => {
 
-  const game =
-    createNewGame();
-
+  const game = createNewGame();
 
   res.json({
 
     success: true,
 
-    message:
-      "🎱 Bingo game created!",
+    message: "🎱 Bingo game created!",
 
     game: game
 
@@ -226,20 +217,17 @@ app.get("/api/game/:id", (req, res) => {
   const game =
     getGame(req.params.id);
 
-
   if (!game) {
 
     return res.status(404).json({
 
       success: false,
 
-      message:
-        "Game not found."
+      message: "Game not found."
 
     });
 
   }
-
 
   res.json({
 
@@ -261,15 +249,13 @@ app.post("/api/game/:id/join", (req, res) => {
   const game =
     getGame(req.params.id);
 
-
   if (!game) {
 
     return res.status(404).json({
 
       success: false,
 
-      message:
-        "Game not found."
+      message: "Game not found."
 
     });
 
@@ -287,16 +273,14 @@ app.post("/api/game/:id/join", (req, res) => {
     );
 
 
-  // Already joined?
-
+  // Player already joined
   if (game.players[userId]) {
 
     return res.json({
 
       success: true,
 
-      message:
-        "Player already joined.",
+      message: "Player already joined.",
 
       player:
         game.players[userId],
@@ -309,7 +293,6 @@ app.post("/api/game/:id/join", (req, res) => {
 
 
   // Create player
-
   const player = {
 
     id: userId,
@@ -356,7 +339,7 @@ app.post("/api/game/:id/join", (req, res) => {
 
 
 // ========================================
-// CALL NEXT NUMBER
+// CALL NEXT BINGO NUMBER
 // ========================================
 
 app.post("/api/game/:id/call", (req, res) => {
@@ -371,8 +354,7 @@ app.post("/api/game/:id/call", (req, res) => {
 
       success: false,
 
-      message:
-        "Game not found."
+      message: "Game not found."
 
     });
 
@@ -395,22 +377,12 @@ app.post("/api/game/:id/call", (req, res) => {
   }
 
 
-  const allNumbers = [];
-
-
-  for (
-    let number = 1;
-    number <= 75;
-    number++
-  ) {
-
-    allNumbers.push(number);
-
-  }
-
-
   const availableNumbers =
-    allNumbers.filter(
+    Array.from(
+      { length: 75 },
+      (_, index) => index + 1
+    )
+    .filter(
       number =>
         !game.calledNumbers.includes(number)
     );
@@ -475,7 +447,7 @@ app.post("/api/game/:id/call", (req, res) => {
 
 
 // ========================================
-// NEW GAME
+// START NEW GAME
 // ========================================
 
 app.post("/api/game/new", (req, res) => {
@@ -569,7 +541,8 @@ app.post("/api/game/join", (req, res) => {
     players:
       Object.keys(game.players).length,
 
-    game: game
+    game:
+      game
 
   });
 
@@ -619,8 +592,9 @@ app.post("/api/game/call", (req, res) => {
   const availableNumbers =
     Array.from(
       { length: 75 },
-      (_, i) => i + 1
-    ).filter(
+      (_, index) => index + 1
+    )
+    .filter(
       number =>
         !game.calledNumbers.includes(number)
     );
@@ -639,9 +613,10 @@ app.post("/api/game/call", (req, res) => {
       success: false,
 
       message:
-        "All numbers have been called.",
+        "All Bingo numbers have been called.",
 
-      game: game
+      game:
+        game
 
     });
 
@@ -677,7 +652,8 @@ app.post("/api/game/call", (req, res) => {
     calledNumbers:
       game.calledNumbers,
 
-    game: game
+    game:
+      game
 
   });
 
@@ -685,7 +661,7 @@ app.post("/api/game/call", (req, res) => {
 
 
 // ========================================
-// SERVER
+// SERVER START
 // ========================================
 
 app.listen(PORT, () => {
