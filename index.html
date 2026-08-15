@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Bot Geda Bingo</title>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -10,31 +11,759 @@
   <style>
     * {
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #18002f, #4b0082);
+      background: linear-gradient(135deg, #17002b, #35005c, #16001f);
       color: white;
       min-height: 100vh;
     }
 
     .container {
-      max-width: 500px;
+      max-width: 520px;
       margin: auto;
-      padding: 20px;
+      padding: 18px;
     }
 
     .logo {
       text-align: center;
       font-size: 42px;
       font-weight: bold;
-      margin-top: 20px;
+      margin-top: 15px;
     }
 
     .subtitle {
       text-align: center;
+      color: #ddd;
+      margin: 8px 0 25px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.10);
+      border-radius: 22px;
+      padding: 20px;
+      margin-bottom: 18px;
+      backdrop-filter: blur(10px);
+    }
+
+    .welcome {
+      text-align: center;
+      font-size: 18px;
+      line-height: 1.5;
+    }
+
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 15px;
+      padding: 16px;
+      margin-top: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      background: linear-gradient(90deg, #ffc400, #ff8c00);
+      color: #2b1700;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .secondary {
+      background: rgba(255,255,255,0.12);
+      color: white;
+    }
+
+    .danger {
+      background: #e53935;
+      color: white;
+    }
+
+    #game {
+      display: none;
+    }
+
+    .bingo-title {
+      text-align: center;
+      font-size: 30px;
+      font-weight: bold;
+      margin: 10px 0 20px;
+    }
+
+    .game-info {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .info {
+      flex: 1;
+      text-align: center;
+      background: rgba(255,255,255,0.10);
+      border-radius: 14px;
+      padding: 12px 5px;
+    }
+
+    .info strong {
+      display: block;
+      font-size: 22px;
+    }
+
+    .called-number {
+      text-align: center;
+      background: rgba(255,255,255,0.12);
+      border-radius: 18px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .called-number .label {
+      font-size: 14px;
+      color: #ddd;
+    }
+
+    .called-number .number-big {
+      font-size: 42px;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+
+    .bingo-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+    }
+
+    .letter,
+    .number {
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9px;
+      font-weight: bold;
+    }
+
+    .letter {
+      background: #b98200;
+      font-size: 19px;
+    }
+
+    .number {
+      background: #eeeeee;
+      color: #111;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .number.called {
+      box-shadow: inset 0 0 0 3px #ff9800;
+    }
+
+    .number.selected {
+      background: #22c55e;
+      color: white;
+      transform: scale(0.94);
+    }
+
+    .number.free {
+      background: #b98200;
+      color: white;
+      cursor: default;
+    }
+
+    .history {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+      justify-content: center;
+    }
+
+    .history span {
+      background: rgba(255,255,255,0.15);
+      padding: 5px 8px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    .footer {
+      text-align: center;
+      color: #aaa;
+      margin: 25px 0 10px;
+      font-size: 13px;
+    }
+
+    .message-box {
+      position: fixed;
+      left: 20px;
+      right: 20px;
+      bottom: 25px;
+      background: white;
+      color: #222;
+      padding: 18px;
+      border-radius: 18px;
+      box-shadow: 0 10px 35px rgba(0,0,0,0.4);
+      display: none;
+      z-index: 999;
+      text-align: center;
+    }
+
+    .message-box button {
+      margin-top: 12px;
+      padding: 11px;
+      font-size: 15px;
+    }
+
+    .small {
+      color: #bbb;
+      font-size: 13px;
+      text-align: center;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- HOME -->
+  <div id="home">
+
+    <div class="logo">
+      🎱 BINGO GEDA
+    </div>
+
+    <div class="subtitle">
+      Play Bingo directly on Telegram
+    </div>
+
+    <div class="card">
+      <div class="welcome">
+        <h2>🎉 Welcome to Bingo Geda!</h2>
+
+        <p>
+          Play exciting Bingo games, mark your numbers,
+          and check your Bingo automatically.
+        </p>
+
+        <p>🎮 Play Bingo</p>
+        <p>🏆 Check Winners</p>
+        <p>📊 Track Your Game</p>
+      </div>
+
+      <button onclick="playBingo()">
+        🎮 PLAY BINGO
+      </button>
+
+      <button class="secondary" onclick="showMessage('🏆 Leaderboard will be available soon!')">
+        🏆 LEADERBOARD
+      </button>
+
+      <button class="secondary" onclick="showMessage('📊 Your game history will be available soon!')">
+        📊 GAME HISTORY
+      </button>
+    </div>
+
+    <div class="footer">
+      Bot Geda • Fast • Fun • Fair
+    </div>
+
+  </div>
+
+
+  <!-- GAME -->
+  <div id="game">
+
+    <div class="bingo-title">
+      🎱 BINGO
+    </div>
+
+    <div class="game-info">
+
+      <div class="info">
+        <span>Called</span>
+        <strong id="calledCount">0</strong>
+      </div>
+
+      <div class="info">
+        <span>Marked</span>
+        <strong id="markedCount">1</strong>
+      </div>
+
+      <div class="info">
+        <span>Status</span>
+        <strong id="gameStatus">PLAY</strong>
+      </div>
+
+    </div>
+
+
+    <!-- CURRENT CALLED NUMBER -->
+    <div class="called-number">
+
+      <div class="label">
+        CURRENT NUMBER
+      </div>
+
+      <div class="number-big" id="currentNumber">
+        —
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="bingo-grid">
+
+        <!-- HEADERS -->
+        <div class="letter">B</div>
+        <div class="letter">I</div>
+        <div class="letter">N</div>
+        <div class="letter">G</div>
+        <div class="letter">O</div>
+
+        <!-- ROW 1 -->
+        <div class="number" data-number="7" onclick="markNumber(this)">7</div>
+        <div class="number" data-number="18" onclick="markNumber(this)">18</div>
+        <div class="number" data-number="34" onclick="markNumber(this)">34</div>
+        <div class="number" data-number="49" onclick="markNumber(this)">49</div>
+        <div class="number" data-number="63" onclick="markNumber(this)">63</div>
+
+        <!-- ROW 2 -->
+        <div class="number" data-number="12" onclick="markNumber(this)">12</div>
+        <div class="number" data-number="22" onclick="markNumber(this)">22</div>
+        <div class="number" data-number="37" onclick="markNumber(this)">37</div>
+        <div class="number" data-number="55" onclick="markNumber(this)">55</div>
+        <div class="number" data-number="71" onclick="markNumber(this)">71</div>
+
+        <!-- ROW 3 -->
+        <div class="number" data-number="3" onclick="markNumber(this)">3</div>
+        <div class="number" data-number="28" onclick="markNumber(this)">28</div>
+
+        <div class="number free selected">
+          ⭐
+        </div>
+
+        <div class="number" data-number="51" onclick="markNumber(this)">51</div>
+        <div class="number" data-number="69" onclick="markNumber(this)">69</div>
+
+        <!-- ROW 4 -->
+        <div class="number" data-number="10" onclick="markNumber(this)">10</div>
+        <div class="number" data-number="17" onclick="markNumber(this)">17</div>
+        <div class="number" data-number="33" onclick="markNumber(this)">33</div>
+        <div class="number" data-number="58" onclick="markNumber(this)">58</div>
+        <div class="number" data-number="72" onclick="markNumber(this)">72</div>
+
+        <!-- ROW 5 -->
+        <div class="number" data-number="6" onclick="markNumber(this)">6</div>
+        <div class="number" data-number="25" onclick="markNumber(this)">25</div>
+        <div class="number" data-number="40" onclick="markNumber(this)">40</div>
+        <div class="number" data-number="57" onclick="markNumber(this)">57</div>
+        <div class="number" data-number="66" onclick="markNumber(this)">66</div>
+
+      </div>
+
+    </div>
+
+
+    <!-- CALL NUMBER -->
+    <button onclick="callNextNumber()">
+      🎱 CALL NEXT NUMBER
+    </button>
+
+
+    <!-- BINGO -->
+    <button onclick="checkBingo()">
+      🏆 BINGO!
+    </button>
+
+
+    <button class="secondary" onclick="resetGame()">
+      🔄 NEW GAME
+    </button>
+
+
+    <button class="secondary" onclick="goHome()">
+      ← BACK
+    </button>
+
+
+    <div class="card">
+
+      <div style="text-align:center;">
+        <strong>Called Numbers</strong>
+      </div>
+
+      <div id="history" class="history"></div>
+
+      <div class="small">
+        Only called numbers can be marked.
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- MESSAGE -->
+<div id="messageBox" class="message-box">
+
+  <div id="messageText"></div>
+
+  <button onclick="closeMessage()">
+    Close
+  </button>
+
+</div>
+
+
+<script>
+
+  // Telegram Mini App
+  const tg = window.Telegram.WebApp;
+
+  tg.ready();
+  tg.expand();
+
+
+  // Game variables
+  let calledNumbers = [];
+  let gameOver = false;
+
+
+  // Start Bingo
+  function playBingo() {
+
+    document.getElementById("home").style.display = "none";
+    document.getElementById("game").style.display = "block";
+
+    resetGame();
+  }
+
+
+  // Go Home
+  function goHome() {
+
+    document.getElementById("game").style.display = "none";
+    document.getElementById("home").style.display = "block";
+  }
+
+
+  // Call next Bingo number
+  function callNextNumber() {
+
+    if (gameOver) {
+      showMessage("🏁 This game is finished. Start a new game.");
+      return;
+    }
+
+
+    const cells = Array.from(
+      document.querySelectorAll("#game .number[data-number]")
+    );
+
+
+    const available = cells
+      .map(cell => Number(cell.dataset.number))
+      .filter(number => !calledNumbers.includes(number));
+
+
+    if (available.length === 0) {
+
+      showMessage("🎱 All numbers have been called!");
+      return;
+    }
+
+
+    const randomIndex =
+      Math.floor(Math.random() * available.length);
+
+
+    const number =
+      available[randomIndex];
+
+
+    calledNumbers.push(number);
+
+
+    document.getElementById("currentNumber").textContent =
+      number;
+
+
+    document.getElementById("calledCount").textContent =
+      calledNumbers.length;
+
+
+    updateHistory();
+
+
+    // Highlight called number
+    cells.forEach(cell => {
+
+      if (Number(cell.dataset.number) === number) {
+        cell.classList.add("called");
+      }
+
+    });
+
+
+    // Telegram haptic feedback
+    try {
+      tg.HapticFeedback.impactOccurred("medium");
+    } catch (e) {}
+
+  }
+
+
+  // Mark a number
+  function markNumber(cell) {
+
+    if (gameOver) {
+      return;
+    }
+
+
+    const number =
+      Number(cell.dataset.number);
+
+
+    if (!calledNumbers.includes(number)) {
+
+      showMessage(
+        "⚠️ This number has not been called yet."
+      );
+
+      return;
+    }
+
+
+    cell.classList.toggle("selected");
+
+
+    updateMarkedCount();
+
+
+    try {
+      tg.HapticFeedback.selectionChanged();
+    } catch (e) {}
+
+  }
+
+
+  // Count marked numbers
+  function updateMarkedCount() {
+
+    const marked =
+      document.querySelectorAll(
+        "#game .number.selected"
+      ).length;
+
+
+    document.getElementById("markedCount").textContent =
+      marked;
+
+  }
+
+
+  // Check Bingo
+  function checkBingo() {
+
+    if (gameOver) {
+      showMessage("🏁 This game is already finished.");
+      return;
+    }
+
+
+    const cells = Array.from(
+      document.querySelectorAll(
+        "#game .number"
+      )
+    );
+
+
+    const selected = cells.map(cell =>
+      cell.classList.contains("selected")
+    );
+
+
+    // Center FREE space
+    selected[12] = true;
+
+
+    const lines = [
+
+      // Rows
+      [0,1,2,3,4],
+      [5,6,7,8,9],
+      [10,11,12,13,14],
+      [15,16,17,18,19],
+      [20,21,22,23,24],
+
+      // Columns
+      [0,5,10,15,20],
+      [1,6,11,16,21],
+      [2,7,12,17,22],
+      [3,8,13,18,23],
+      [4,9,14,19,24],
+
+      // Diagonals
+      [0,6,12,18,24],
+      [4,8,12,16,20]
+
+    ];
+
+
+    const winningLine =
+      lines.find(line =>
+        line.every(index => selected[index])
+      );
+
+
+    if (winningLine) {
+
+      gameOver = true;
+
+
+      document.getElementById("gameStatus")
+        .textContent = "WIN";
+
+
+      winningLine.forEach(index => {
+
+        cells[index].style.background =
+          "#ffd700";
+
+        cells[index].style.color =
+          "#111";
+
+      });
+
+
+      showMessage(
+        "🎉 BINGO! Congratulations! You won! 🏆"
+      );
+
+
+      try {
+        tg.HapticFeedback.notificationOccurred("success");
+      } catch (e) {}
+
+
+    } else {
+
+      showMessage(
+        "❌ Not Bingo yet!\n\n" +
+        "You need a complete row, column, or diagonal."
+      );
+
+    }
+
+  }
+
+
+  // Reset Game
+  function resetGame() {
+
+    calledNumbers = [];
+    gameOver = false;
+
+
+    document.getElementById("currentNumber")
+      .textContent = "—";
+
+
+    document.getElementById("calledCount")
+      .textContent = "0";
+
+
+    document.getElementById("gameStatus")
+      .textContent = "PLAY";
+
+
+    const cells =
+      document.querySelectorAll(
+        "#game .number"
+      );
+
+
+    cells.forEach(cell => {
+
+      cell.classList.remove("selected");
+      cell.style.background = "";
+      cell.style.color = "";
+
+      if (cell.classList.contains("free")) {
+        cell.classList.add("selected");
+      }
+
+    });
+
+
+    updateMarkedCount();
+    updateHistory();
+
+  }
+
+
+  // History
+  function updateHistory() {
+
+    const history =
+      document.getElementById("history");
+
+
+    history.innerHTML = "";
+
+
+    calledNumbers.forEach(number => {
+
+      const span =
+        document.createElement("span");
+
+      span.textContent = number;
+
+      history.appendChild(span);
+
+    });
+
+  }
+
+
+  // Message
+  function showMessage(message) {
+
+    document.getElementById("messageText")
+      .innerHTML =
+      message.replace(/\n/g, "<br>");
+
+
+    document.getElementById("messageBox")
+      .style.display = "block";
+
+  }
+
+
+  // Close message
+  function closeMessage() {
+
+    document.getElementById("messageBox")
+      .style.display = "none";
+
+  }
+
+</script>
+
+</body>
+</html>      text-align: center;
       color: #ddd;
       margin-bottom: 25px;
     }
