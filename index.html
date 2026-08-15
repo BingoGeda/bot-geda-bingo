@@ -1,19 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
   <meta charset="UTF-8">
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
   >
 
   <title>Bingo Geda</title>
 
-  <!-- Telegram Mini App -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -21,218 +23,341 @@
     }
 
     body {
+
       font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #35105e, #6a1b9a);
+
+      background:
+        linear-gradient(
+          135deg,
+          #35105e,
+          #6a1b9a
+        );
+
       color: white;
+
       min-height: 100vh;
-      padding: 18px;
+
+      padding: 16px;
     }
 
     .container {
+
       max-width: 520px;
+
       margin: auto;
     }
 
     .header {
+
       text-align: center;
-      margin-bottom: 20px;
+
+      margin-bottom: 18px;
     }
 
     .logo {
+
       font-size: 42px;
     }
 
     .title {
+
       font-size: 30px;
-      font-weight: 800;
-      margin-top: 5px;
+
+      font-weight: 900;
     }
 
     .subtitle {
+
       color: #ddd;
-      margin-top: 5px;
+
       font-size: 14px;
+
+      margin-top: 5px;
     }
 
     .card {
-      background: rgba(255, 255, 255, 0.10);
+
+      background:
+        rgba(255,255,255,0.10);
+
       border-radius: 20px;
+
       padding: 18px;
+
       margin-bottom: 16px;
+
       backdrop-filter: blur(10px);
     }
 
     .game-info {
+
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 18px;
+
+      grid-template-columns:
+        repeat(3, 1fr);
+
+      gap: 8px;
+
+      margin-bottom: 15px;
     }
 
     .info {
-      background: rgba(255, 255, 255, 0.08);
+
+      background:
+        rgba(255,255,255,0.08);
+
       border-radius: 12px;
-      padding: 10px 5px;
+
+      padding: 10px 4px;
+
       text-align: center;
     }
 
     .info strong {
+
       display: block;
+
       font-size: 20px;
-      margin-bottom: 3px;
     }
 
     .info small {
+
       color: #ccc;
+
       font-size: 11px;
     }
 
     button {
+
       width: 100%;
+
       border: none;
+
       padding: 14px;
+
       border-radius: 14px;
-      background: linear-gradient(90deg, #ffb300, #ff6f00);
+
+      background:
+        linear-gradient(
+          90deg,
+          #ffb300,
+          #ff6f00
+        );
+
       color: white;
+
       font-size: 17px;
+
       font-weight: bold;
+
       cursor: pointer;
+
       margin-top: 8px;
     }
 
     button:active {
-      transform: scale(0.98);
+
+      transform: scale(.98);
     }
 
     .secondary {
-      background: rgba(255, 255, 255, 0.12);
-    }
 
-    .danger {
-      background: #b71c1c;
+      background:
+        rgba(255,255,255,.12);
     }
 
     .hidden {
+
       display: none;
     }
 
     .message {
+
       text-align: center;
-      margin: 12px 0;
-      min-height: 20px;
+
       color: #ffe082;
-      font-weight: bold;
+
+      min-height: 20px;
+
+      margin: 10px;
     }
 
     .bingo-title {
+
       text-align: center;
-      font-size: 26px;
-      margin-bottom: 14px;
+
+      font-size: 25px;
+
+      font-weight: bold;
+
+      margin-bottom: 12px;
     }
 
     .bingo-grid {
+
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
+
+      grid-template-columns:
+        repeat(5, 1fr);
+
+      gap: 5px;
     }
 
     .letter {
+
       background: #ffb300;
+
       color: #35105e;
-      font-weight: 800;
+
       text-align: center;
+
+      font-weight: 900;
+
       padding: 10px 0;
-      border-radius: 7px;
+
+      border-radius: 6px;
     }
 
     .number {
+
       background: white;
+
       color: #251039;
+
       text-align: center;
+
       padding: 13px 0;
-      border-radius: 7px;
+
+      border-radius: 6px;
+
       font-weight: bold;
-      font-size: 15px;
+
       cursor: pointer;
     }
 
     .number.marked {
+
       background: #ffb300;
+
       color: #35105e;
-      transform: scale(0.95);
     }
 
     .free {
-      background: #ffb300;
-      color: #35105e;
-    }
 
-    .called-section {
-      margin-top: 18px;
+      background: #ffb300;
+
+      color: #35105e;
     }
 
     .called-number {
-      width: 85px;
-      height: 85px;
-      margin: auto;
+
+      width: 90px;
+
+      height: 90px;
+
       border-radius: 50%;
+
       background: #ffb300;
+
       color: #35105e;
+
       display: flex;
+
       align-items: center;
+
       justify-content: center;
-      font-size: 30px;
+
+      margin: auto;
+
+      font-size: 32px;
+
       font-weight: 900;
     }
 
     .called-list {
+
       display: flex;
+
       flex-wrap: wrap;
-      gap: 6px;
+
+      gap: 5px;
+
       justify-content: center;
-      margin-top: 12px;
+
+      margin-top: 15px;
     }
 
     .called-list span {
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 8px;
+
+      background:
+        rgba(255,255,255,.15);
+
       padding: 6px 9px;
+
+      border-radius: 8px;
+
       font-size: 12px;
     }
 
     .winner {
-      text-align: center;
+
       background: #ffb300;
+
       color: #35105e;
-      padding: 15px;
+
+      text-align: center;
+
+      padding: 18px;
+
       border-radius: 15px;
-      font-size: 22px;
+
+      font-size: 24px;
+
       font-weight: 900;
-      margin-top: 15px;
     }
 
     .footer {
+
       text-align: center;
+
       color: #bbb;
+
       font-size: 12px;
-      margin: 22px 0 10px;
+
+      margin-top: 20px;
     }
+
   </style>
+
 </head>
+
 
 <body>
 
 <div class="container">
 
+
   <!-- HEADER -->
+
   <div class="header">
-    <div class="logo">🎱</div>
-    <div class="title">BINGO GEDA</div>
-    <div class="subtitle">Play Bingo directly on Telegram</div>
+
+    <div class="logo">
+      🎱
+    </div>
+
+    <div class="title">
+      BINGO GEDA
+    </div>
+
+    <div class="subtitle">
+      Multiplayer Bingo on Telegram
+    </div>
+
   </div>
 
 
   <!-- HOME -->
+
   <div id="home">
 
     <div class="card">
@@ -240,28 +365,54 @@
       <div class="game-info">
 
         <div class="info">
-          <strong id="playerCount">0</strong>
-          <small>Players</small>
+
+          <strong id="players">
+            0
+          </strong>
+
+          <small>
+            Players
+          </small>
+
         </div>
 
         <div class="info">
-          <strong id="gameStatus">WAITING</strong>
-          <small>Status</small>
+
+          <strong id="status">
+            WAITING
+          </strong>
+
+          <small>
+            Status
+          </small>
+
         </div>
 
         <div class="info">
-          <strong id="numberCount">0</strong>
-          <small>Called</small>
+
+          <strong id="called">
+            0
+          </strong>
+
+          <small>
+            Called
+          </small>
+
         </div>
 
       </div>
 
-      <button onclick="joinGame()">
-        🎮 JOIN GAME
+
+      <button onclick="createGame()">
+        🎱 CREATE GAME
       </button>
 
-      <button class="secondary" onclick="newGame()">
-        🔄 NEW GAME
+
+      <button
+        class="secondary"
+        onclick="joinCurrentGame()"
+      >
+        🎮 JOIN GAME
       </button>
 
     </div>
@@ -270,6 +421,7 @@
 
 
   <!-- GAME -->
+
   <div id="game" class="hidden">
 
     <div class="card">
@@ -278,27 +430,48 @@
         🎟️ YOUR BINGO CARD
       </div>
 
+
       <div class="bingo-grid">
 
-        <div class="letter">B</div>
-        <div class="letter">I</div>
-        <div class="letter">N</div>
-        <div class="letter">G</div>
-        <div class="letter">O</div>
+        <div class="letter">
+          B
+        </div>
+
+        <div class="letter">
+          I
+        </div>
+
+        <div class="letter">
+          N
+        </div>
+
+        <div class="letter">
+          G
+        </div>
+
+        <div class="letter">
+          O
+        </div>
 
       </div>
 
+
       <div
-        id="bingoNumbers"
+        id="bingoCard"
         class="bingo-grid"
-        style="margin-top:6px;"
+        style="margin-top:5px;"
       ></div>
+
 
       <button onclick="checkBingo()">
         🏆 CHECK BINGO
       </button>
 
-      <button class="secondary" onclick="backHome()">
+
+      <button
+        class="secondary"
+        onclick="backHome()"
+      >
         ← BACK
       </button>
 
@@ -307,22 +480,35 @@
 
     <!-- CALLED NUMBER -->
 
-    <div class="card called-section">
+    <div class="card">
 
-      <h3 style="text-align:center; margin-bottom:12px;">
+      <h3
+        style="
+          text-align:center;
+          margin-bottom:12px;
+        "
+      >
         📢 LAST CALLED NUMBER
       </h3>
 
-      <div id="lastNumber" class="called-number">
+
+      <div
+        id="lastNumber"
+        class="called-number"
+      >
         —
       </div>
 
-      <div id="calledList" class="called-list"></div>
+
+      <div
+        id="calledList"
+        class="called-list"
+      ></div>
 
     </div>
 
 
-    <!-- ADMIN NUMBER CALL -->
+    <!-- HOST -->
 
     <div class="card">
 
@@ -333,624 +519,22 @@
     </div>
 
 
-    <div id="winnerBox" class="winner hidden">
+    <div
+      id="winner"
+      class="winner hidden"
+    >
       🏆 BINGO!
     </div>
 
   </div>
 
 
-  <div id="message" class="message"></div>
+  <div
+    id="message"
+    class="message"
+  ></div>
+
 
   <div class="footer">
-    Bot Geda • Fast • Fun • Fair 🎱
-  </div>
 
-</div>
-
-
-<script>
-
-  // ========================================
-  // TELEGRAM MINI APP
-  // ========================================
-
-  const tg = window.Telegram?.WebApp;
-
-  if (tg) {
-    tg.ready();
-    tg.expand();
-  }
-
-
-  // ========================================
-  // API
-  // ========================================
-
-  const API = "";
-
-
-  // ========================================
-  // GAME STATE
-  // ========================================
-
-  let currentGame = null;
-  let myCard = [];
-  let markedNumbers = [];
-
-
-  // ========================================
-  // MESSAGE
-  // ========================================
-
-  function showMessage(text) {
-
-    document.getElementById("message").textContent = text;
-
-    setTimeout(() => {
-      document.getElementById("message").textContent = "";
-    }, 3000);
-
-  }
-
-
-  // ========================================
-  // GET GAME
-  // ========================================
-
-  async function loadGame() {
-
-    try {
-
-      const response = await fetch(API + "/api/game");
-
-      const data = await response.json();
-
-      if (data.success) {
-
-        currentGame = data.game;
-
-        updateGameUI();
-
-      }
-
-    } catch (error) {
-
-      showMessage("❌ Cannot connect to Bingo Geda server.");
-
-    }
-
-  }
-
-
-  // ========================================
-  // UPDATE UI
-  // ========================================
-
-  function updateGameUI() {
-
-    if (!currentGame) return;
-
-    document.getElementById("playerCount").textContent =
-      currentGame.players;
-
-    document.getElementById("gameStatus").textContent =
-      currentGame.status.toUpperCase();
-
-    document.getElementById("numberCount").textContent =
-      currentGame.calledNumbers.length;
-
-    if (currentGame.calledNumbers.length > 0) {
-
-      const last =
-        currentGame.calledNumbers[
-          currentGame.calledNumbers.length - 1
-        ];
-
-      document.getElementById("lastNumber").textContent = last;
-
-    }
-
-    renderCalledNumbers();
-
-  }
-
-
-  // ========================================
-  // JOIN GAME
-  // ========================================
-
-  async function joinGame() {
-
-    try {
-
-      const response = await fetch(
-        API + "/api/game/join",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          }
-        }
-      );
-
-      const data = await response.json();
-
-      if (data.success) {
-
-        currentGame = data.game;
-
-        generateCard();
-
-        document.getElementById("home")
-          .classList.add("hidden");
-
-        document.getElementById("game")
-          .classList.remove("hidden");
-
-        updateGameUI();
-
-        showMessage("🎉 You joined Bingo Geda!");
-
-      }
-
-    } catch (error) {
-
-      showMessage("❌ Failed to join game.");
-
-    }
-
-  }
-
-
-  // ========================================
-  // NEW GAME
-  // ========================================
-
-  async function newGame() {
-
-    try {
-
-      const response = await fetch(
-        API + "/api/game/new",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          }
-        }
-      );
-
-      const data = await response.json();
-
-      if (data.success) {
-
-        currentGame = data.game;
-
-        myCard = [];
-        markedNumbers = [];
-
-        document.getElementById("game")
-          .classList.add("hidden");
-
-        document.getElementById("home")
-          .classList.remove("hidden");
-
-        updateGameUI();
-
-        showMessage("🔄 New Bingo game created!");
-
-      }
-
-    } catch (error) {
-
-      showMessage("❌ Could not create new game.");
-
-    }
-
-  }
-
-
-  // ========================================
-  // GENERATE BINGO CARD
-  // ========================================
-
-  function generateCard() {
-
-    const card = [];
-
-    const ranges = [
-      [1, 15],
-      [16, 30],
-      [31, 45],
-      [46, 60],
-      [61, 75]
-    ];
-
-    for (let column = 0; column < 5; column++) {
-
-      const numbers = [];
-
-      for (
-        let number = ranges[column][0];
-        number <= ranges[column][1];
-        number++
-      ) {
-        numbers.push(number);
-      }
-
-      numbers.sort(() => Math.random() - 0.5);
-
-      for (let row = 0; row < 5; row++) {
-
-        if (column === 2 && row === 2) {
-
-          card.push("FREE");
-
-        } else {
-
-          card.push(numbers[row]);
-
-        }
-
-      }
-
-    }
-
-    myCard = [];
-
-    for (let row = 0; row < 5; row++) {
-
-      for (let column = 0; column < 5; column++) {
-
-        myCard.push(card[column * 5 + row]);
-
-      }
-
-    }
-
-    renderCard();
-
-  }
-
-
-  // ========================================
-  // RENDER CARD
-  // ========================================
-
-  function renderCard() {
-
-    const container =
-      document.getElementById("bingoNumbers");
-
-    container.innerHTML = "";
-
-    myCard.forEach((number, index) => {
-
-      const cell = document.createElement("div");
-
-      cell.className = "number";
-
-      cell.textContent = number;
-
-      if (number === "FREE") {
-
-        cell.classList.add("free");
-
-      }
-
-      if (markedNumbers.includes(number)) {
-
-        cell.classList.add("marked");
-
-      }
-
-      cell.onclick = () => {
-
-        if (number !== "FREE") {
-
-          if (markedNumbers.includes(number)) {
-
-            markedNumbers =
-              markedNumbers.filter(n => n !== number);
-
-          } else {
-
-            markedNumbers.push(number);
-
-          }
-
-          renderCard();
-
-        }
-
-      };
-
-      container.appendChild(cell);
-
-    });
-
-  }
-
-
-  // ========================================
-  // CALL NUMBER
-  // ========================================
-
-  async function callNumber() {
-
-    try {
-
-      const response = await fetch(
-        API + "/api/game/call",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          }
-        }
-      );
-
-      const data = await response.json();
-
-      if (data.success) {
-
-        currentGame = data.game;
-
-        updateGameUI();
-
-        autoMarkCalledNumber(data.number);
-
-        showMessage("📢 Number called: " + data.number);
-
-      } else {
-
-        showMessage(data.message);
-
-      }
-
-    } catch (error) {
-
-      showMessage("❌ Failed to call number.");
-
-    }
-
-  }
-
-
-  // ========================================
-  // AUTO MARK
-  // ========================================
-
-  function autoMarkCalledNumber(number) {
-
-    if (myCard.includes(number)) {
-
-      if (!markedNumbers.includes(number)) {
-
-        markedNumbers.push(number);
-
-      }
-
-      renderCard();
-
-    }
-
-  }
-
-
-  // ========================================
-  // CALLED NUMBERS
-  // ========================================
-
-  function renderCalledNumbers() {
-
-    const list =
-      document.getElementById("calledList");
-
-    list.innerHTML = "";
-
-    if (!currentGame) return;
-
-    currentGame.calledNumbers
-      .slice()
-      .reverse()
-      .forEach(number => {
-
-        const span = document.createElement("span");
-
-        span.textContent = number;
-
-        list.appendChild(span);
-
-      });
-
-  }
-
-
-  // ========================================
-  // CHECK BINGO
-  // ========================================
-
-  function checkBingo() {
-
-    if (myCard.length !== 25) return;
-
-    const marks = new Set(markedNumbers);
-
-    marks.add("FREE");
-
-
-    // Rows
-
-    for (let row = 0; row < 5; row++) {
-
-      let win = true;
-
-      for (let column = 0; column < 5; column++) {
-
-        const value =
-          myCard[row * 5 + column];
-
-        if (!marks.has(value)) {
-
-          win = false;
-
-          break;
-
-        }
-
-      }
-
-      if (win) {
-
-        showWinner();
-
-        return;
-
-      }
-
-    }
-
-
-    // Columns
-
-    for (let column = 0; column < 5; column++) {
-
-      let win = true;
-
-      for (let row = 0; row < 5; row++) {
-
-        const value =
-          myCard[row * 5 + column];
-
-        if (!marks.has(value)) {
-
-          win = false;
-
-          break;
-
-        }
-
-      }
-
-      if (win) {
-
-        showWinner();
-
-        return;
-
-      }
-
-    }
-
-
-    // Diagonal 1
-
-    let diagonal1 = true;
-
-    for (let i = 0; i < 5; i++) {
-
-      if (!marks.has(myCard[i * 5 + i])) {
-
-        diagonal1 = false;
-
-        break;
-
-      }
-
-    }
-
-    if (diagonal1) {
-
-      showWinner();
-
-      return;
-
-    }
-
-
-    // Diagonal 2
-
-    let diagonal2 = true;
-
-    for (let i = 0; i < 5; i++) {
-
-      if (!marks.has(myCard[i * 5 + (4 - i)])) {
-
-        diagonal2 = false;
-
-        break;
-
-      }
-
-    }
-
-    if (diagonal2) {
-
-      showWinner();
-
-      return;
-
-    }
-
-
-    showMessage("❌ No Bingo yet. Keep playing!");
-
-  }
-
-
-  // ========================================
-  // WINNER
-  // ========================================
-
-  function showWinner() {
-
-    document
-      .getElementById("winnerBox")
-      .classList.remove("hidden");
-
-    showMessage("🏆 BINGO! Congratulations!");
-
-    if (tg) {
-
-      tg.showAlert(
-        "🏆 BINGO!\nCongratulations!"
-      );
-
-    }
-
-  }
-
-
-  // ========================================
-  // BACK HOME
-  // ========================================
-
-  function backHome() {
-
-    document
-      .getElementById("game")
-      .classList.add("hidden");
-
-    document
-      .getElementById("home")
-      .classList.remove("hidden");
-
-  }
-
-
-  // ========================================
-  // INITIAL LOAD
-  // ========================================
-
-  loadGame();
-
-  // Refresh game information every 3 seconds
-
-  setInterval(loadGame, 3000);
-
-</script>
-
-</body>
-</html>
+    Bot Geda • Fast • Fun • Fair
