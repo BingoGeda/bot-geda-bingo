@@ -1,14 +1,29 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
+// ================================
+// PORT
+// ================================
 const PORT = process.env.PORT || 10000;
 
-// Current Bingo game
+
+// ================================
+// SERVE MINI APP
+// ================================
+// This serves index.html from the
+// root of the GitHub repository.
+app.use(express.static(path.join(__dirname)));
+
+
+// ================================
+// CURRENT BINGO GAME
+// ================================
 let game = {
   id: Date.now(),
   calledNumbers: [],
@@ -17,17 +32,17 @@ let game = {
 };
 
 
-// Home / health check
+// ================================
+// HOME / MINI APP
+// ================================
 app.get("/", (req, res) => {
-  res.json({
-    success: true,
-    message: "🎱 Bingo Geda Server is running!",
-    game: game
-  });
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
 
-// Get current game
+// ================================
+// GET CURRENT GAME
+// ================================
 app.get("/api/game", (req, res) => {
   res.json({
     success: true,
@@ -36,7 +51,9 @@ app.get("/api/game", (req, res) => {
 });
 
 
-// Call next Bingo number
+// ================================
+// CALL NEXT BINGO NUMBER
+// ================================
 app.post("/api/game/call", (req, res) => {
 
   if (game.status === "finished") {
@@ -57,9 +74,13 @@ app.post("/api/game/call", (req, res) => {
   );
 
   if (availableNumbers.length === 0) {
+
+    game.status = "finished";
+
     return res.json({
       success: false,
-      message: "All numbers have been called."
+      message: "All numbers have been called.",
+      game: game
     });
   }
 
@@ -69,6 +90,7 @@ app.post("/api/game/call", (req, res) => {
   const number = availableNumbers[randomIndex];
 
   game.calledNumbers.push(number);
+
   game.status = "playing";
 
   res.json({
@@ -81,7 +103,9 @@ app.post("/api/game/call", (req, res) => {
 });
 
 
-// Start a new game
+// ================================
+// START NEW GAME
+// ================================
 app.post("/api/game/new", (req, res) => {
 
   game = {
@@ -100,7 +124,9 @@ app.post("/api/game/new", (req, res) => {
 });
 
 
-// Join game
+// ================================
+// JOIN GAME
+// ================================
 app.post("/api/game/join", (req, res) => {
 
   game.players++;
@@ -117,7 +143,9 @@ app.post("/api/game/join", (req, res) => {
 });
 
 
-// Check server
+// ================================
+// HEALTH CHECK
+// ================================
 app.get("/api/health", (req, res) => {
 
   res.json({
@@ -129,6 +157,9 @@ app.get("/api/health", (req, res) => {
 });
 
 
+// ================================
+// SERVER START
+// ================================
 app.listen(PORT, () => {
 
   console.log(
