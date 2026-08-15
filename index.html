@@ -7,10 +7,12 @@
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    content="width=device-width, initial-scale=1.0"
   >
 
   <title>Bingo Geda</title>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
 
@@ -19,544 +21,161 @@
     }
 
     body {
-
       margin: 0;
-
-      min-height: 100vh;
-
-      font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
-      background:
-        linear-gradient(
-          135deg,
-          #35105e,
-          #6a1b9a,
-          #251039
-        );
-
-      color: white;
-
       padding: 20px;
-
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background:
+        linear-gradient(135deg, #35105e, #6a1b9a);
+      color: white;
     }
-
 
     .container {
-
       max-width: 500px;
-
       margin: auto;
-
     }
-
-
-    .header {
-
-      text-align: center;
-
-      margin-bottom: 20px;
-
-    }
-
 
     .logo {
-
-      font-size: 55px;
-
-      margin-bottom: 5px;
-
+      text-align: center;
+      font-size: 60px;
+      margin-top: 15px;
     }
-
 
     h1 {
-
-      margin: 0;
-
-      font-size: 34px;
-
-      font-weight: 800;
-
+      text-align: center;
+      margin: 5px 0;
+      font-size: 32px;
     }
-
 
     .subtitle {
-
+      text-align: center;
       color: #ddd;
-
-      margin-top: 6px;
-
-      font-size: 15px;
-
+      margin-bottom: 30px;
     }
-
 
     .card {
-
-      background:
-        rgba(255,255,255,0.10);
-
-      border:
-        1px solid
-        rgba(255,255,255,0.15);
-
-      border-radius: 22px;
-
-      padding: 20px;
-
-      margin-bottom: 18px;
-
-      backdrop-filter:
-        blur(12px);
-
-      box-shadow:
-        0 10px 30px
-        rgba(0,0,0,0.20);
-
+      background: rgba(255,255,255,0.12);
+      border-radius: 20px;
+      padding: 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
     }
-
-
-    .room-title {
-
-      text-align: center;
-
-      font-size: 14px;
-
-      color: #ddd;
-
-      margin-bottom: 7px;
-
-    }
-
-
-    .room-code {
-
-      text-align: center;
-
-      font-size: 34px;
-
-      font-weight: 900;
-
-      letter-spacing: 5px;
-
-      color: #ffb300;
-
-      margin-bottom: 15px;
-
-    }
-
-
-    .game-info {
-
-      display: grid;
-
-      grid-template-columns:
-        repeat(3,1fr);
-
-      gap: 8px;
-
-      margin-bottom: 18px;
-
-    }
-
 
     .info {
-
+      display: flex;
+      justify-content: space-between;
       text-align: center;
-
-      background:
-        rgba(255,255,255,0.08);
-
-      border-radius: 12px;
-
-      padding: 12px 5px;
-
+      margin-bottom: 20px;
     }
 
+    .info-box {
+      flex: 1;
+    }
 
-    .info strong {
-
+    .info-number {
       display: block;
-
-      font-size: 20px;
-
-      margin-bottom: 4px;
-
+      font-size: 25px;
+      font-weight: bold;
     }
 
-
-    .info span {
-
-      font-size: 11px;
-
-      color: #ccc;
-
+    .info-label {
+      color: #ddd;
+      font-size: 13px;
     }
-
 
     button {
-
       width: 100%;
-
       border: none;
-
-      padding: 15px;
-
       border-radius: 14px;
-
-      background:
-        linear-gradient(
-          90deg,
-          #ffb300,
-          #ff6f00
-        );
-
-      color: white;
-
-      font-size: 17px;
-
+      padding: 16px;
+      margin-top: 10px;
+      font-size: 18px;
       font-weight: bold;
-
       cursor: pointer;
-
-      margin-top: 8px;
-
+      color: white;
+      background: linear-gradient(90deg, #ffb300, #ff6f00);
     }
-
 
     button:active {
-
-      transform:
-        scale(0.98);
-
+      transform: scale(0.97);
     }
 
+    button:disabled {
+      opacity: 0.6;
+    }
 
     .secondary {
-
-      background:
-        rgba(255,255,255,0.12);
-
+      background: rgba(255,255,255,0.15);
     }
-
-
-    .danger {
-
-      background:
-        linear-gradient(
-          90deg,
-          #d32f2f,
-          #b71c1c
-        );
-
-    }
-
 
     input {
-
       width: 100%;
-
       padding: 15px;
-
       border: none;
-
+      border-radius: 12px;
+      margin-top: 10px;
+      font-size: 16px;
       outline: none;
+    }
 
-      border-radius: 13px;
+    #gameScreen {
+      display: none;
+    }
 
-      font-size: 18px;
-
+    #message {
       text-align: center;
-
-      text-transform: uppercase;
-
-      letter-spacing: 4px;
-
-      margin-bottom: 8px;
-
-    }
-
-
-    .message {
-
-      text-align: center;
-
-      margin: 12px 0;
-
-      font-size: 14px;
-
-      min-height: 20px;
-
-      color: #ffda6a;
-
-    }
-
-
-    .players {
-
-      margin-top: 15px;
-
-    }
-
-
-    .player {
-
-      display: flex;
-
-      justify-content:
-        space-between;
-
-      align-items: center;
-
-      background:
-        rgba(255,255,255,0.08);
-
-      padding: 10px 12px;
-
-      border-radius: 10px;
-
-      margin-top: 7px;
-
-      font-size: 14px;
-
-    }
-
-
-    .host {
-
-      color: #ffb300;
-
-      font-weight: bold;
-
-    }
-
-
-    .last-number {
-
-      text-align: center;
-
       margin: 15px 0;
-
+      min-height: 25px;
+      color: #ffd54f;
+      font-weight: bold;
     }
 
-
-    .last-number .number {
-
-      width: 95px;
-
-      height: 95px;
-
-      margin: auto;
-
-      display: flex;
-
-      align-items: center;
-
-      justify-content: center;
-
-      border-radius: 50%;
-
-      background:
-        linear-gradient(
-          135deg,
-          #ffb300,
-          #ff6f00
-        );
-
-      font-size: 38px;
-
-      font-weight: 900;
-
-      box-shadow:
-        0 8px 25px
-        rgba(0,0,0,0.3);
-
-    }
-
-
-    .last-number p {
-
-      color: #ccc;
-
-      font-size: 13px;
-
-    }
-
-
-    .bingo-title {
-
+    .number-box {
       text-align: center;
-
-      font-size: 25px;
-
-      font-weight: 800;
-
-      margin-bottom: 12px;
-
+      font-size: 50px;
+      font-weight: bold;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.12);
     }
 
-
-    .bingo-grid {
-
+    .called {
       display: grid;
-
-      grid-template-columns:
-        repeat(5,1fr);
-
+      grid-template-columns: repeat(10, 1fr);
       gap: 5px;
-
+      margin-top: 15px;
     }
 
-
-    .letter {
-
-      background: #ffb300;
-
-      color: #35105e;
-
-      font-weight: bold;
-
+    .called span {
+      background: rgba(255,255,255,0.15);
+      padding: 7px 2px;
+      border-radius: 5px;
       text-align: center;
-
-      padding: 10px 0;
-
-      border-radius: 6px;
-
+      font-size: 12px;
     }
-
-
-    .number-cell {
-
-      background: white;
-
-      color: #251039;
-
-      text-align: center;
-
-      padding: 13px 0;
-
-      border-radius: 6px;
-
-      font-weight: bold;
-
-      font-size: 15px;
-
-      cursor: pointer;
-
-      transition: 0.15s;
-
-    }
-
-
-    .number-cell:hover {
-
-      transform:
-        scale(1.03);
-
-    }
-
-
-    .number-cell.called {
-
-      background: #ffb300;
-
-      color: #35105e;
-
-    }
-
-
-    .number-cell.marked {
-
-      background: #00c853;
-
-      color: white;
-
-    }
-
-
-    .number-cell.free {
-
-      background: #ffb300;
-
-      color: #35105e;
-
-      cursor: default;
-
-    }
-
-
-    .called-list {
-
-      display: flex;
-
-      flex-wrap: wrap;
-
-      gap: 6px;
-
-      margin-top: 12px;
-
-    }
-
-
-    .called-number {
-
-      background:
-        rgba(255,255,255,0.12);
-
-      padding: 7px 9px;
-
-      border-radius: 8px;
-
-      font-size: 13px;
-
-    }
-
-
-    .hidden {
-
-      display: none !important;
-
-    }
-
 
     .footer {
-
       text-align: center;
-
       color: #bbb;
-
-      font-size: 12px;
-
-      margin-top: 20px;
-
-      padding-bottom: 10px;
-
+      font-size: 13px;
+      margin-top: 30px;
     }
 
   </style>
 
 </head>
 
-
 <body>
 
 <div class="container">
 
+  <div class="logo">🎱</div>
 
-  <!-- HEADER -->
+  <h1>BINGO GEDA</h1>
 
-  <div class="header">
-
-    <div class="logo">🎱</div>
-
-    <h1>BINGO GEDA</h1>
-
-    <div class="subtitle">
-      Multiplayer Bingo on Telegram
-    </div>
-
+  <div class="subtitle">
+    Multiplayer Bingo on Telegram
   </div>
 
 
@@ -564,28 +183,53 @@
 
   <div id="homeScreen">
 
-
     <div class="card">
 
-      <h2 style="text-align:center;">
-        🎮 Welcome to Bingo Geda
-      </h2>
+      <h2>🎮 Welcome to Bingo Geda</h2>
 
-      <p
-        style="
-          text-align:center;
-          color:#ccc;
-          line-height:1.5;
-        "
-      >
-        Create a Bingo room and invite
-        your friends to play together.
+      <p>
+        Create a Bingo room and invite your friends
+        to play together.
       </p>
 
+      <div class="info">
 
-      <button
-        onclick="createGame()"
-      >
+        <div class="info-box">
+          <span
+            id="playerCount"
+            class="info-number"
+          >0</span>
+
+          <span class="info-label">
+            Players
+          </span>
+        </div>
+
+        <div class="info-box">
+          <span
+            id="gameStatus"
+            class="info-number"
+          >WAITING</span>
+
+          <span class="info-label">
+            Status
+          </span>
+        </div>
+
+        <div class="info-box">
+          <span
+            id="calledCount"
+            class="info-number"
+          >0</span>
+
+          <span class="info-label">
+            Called
+          </span>
+        </div>
+
+      </div>
+
+      <button id="createButton">
         🎱 CREATE GAME
       </button>
 
@@ -594,115 +238,60 @@
 
     <div class="card">
 
-      <h3 style="text-align:center;">
-        👥 JOIN A GAME
-      </h3>
+      <h3>👥 JOIN A GAME</h3>
 
       <input
-        id="roomInput"
-        maxlength="6"
-        placeholder="ROOM CODE"
+        id="gameIdInput"
+        type="text"
+        placeholder="Enter Game ID"
       >
 
       <button
+        id="joinButton"
         class="secondary"
-        onclick="joinGame()"
       >
         🎮 JOIN GAME
       </button>
 
     </div>
 
-
-    <div
-      id="homeMessage"
-      class="message"
-    ></div>
-
-
   </div>
 
 
-  <!-- GAME -->
+  <!-- GAME SCREEN -->
 
-  <div
-    id="gameScreen"
-    class="hidden"
-  >
-
-
-    <!-- ROOM -->
+  <div id="gameScreen">
 
     <div class="card">
 
-      <div class="room-title">
-        ROOM CODE
-      </div>
+      <h2 style="text-align:center;">
+        🎱 Bingo Room
+      </h2>
 
-      <div
-        id="roomCode"
-        class="room-code"
-      >
-        ------
-      </div>
+      <div class="info">
 
-      <button
-        class="secondary"
-        onclick="copyRoomCode()"
-      >
-        📋 COPY ROOM CODE
-      </button>
+        <div class="info-box">
 
-      <button
-        class="secondary"
-        onclick="shareRoom()"
-      >
-        📤 SHARE ROOM
-      </button>
+          <span
+            id="roomPlayers"
+            class="info-number"
+          >0</span>
 
-    </div>
-
-
-    <!-- GAME INFO -->
-
-    <div class="card">
-
-      <div class="game-info">
-
-        <div class="info">
-
-          <strong id="playersCount">
-            0
-          </strong>
-
-          <span>
-            PLAYERS
+          <span class="info-label">
+            Players
           </span>
 
         </div>
 
+        <div class="info-box">
 
-        <div class="info">
+          <span
+            id="roomCalled"
+            class="info-number"
+          >0</span>
 
-          <strong id="status">
-            WAITING
-          </strong>
-
-          <span>
-            STATUS
-          </span>
-
-        </div>
-
-
-        <div class="info">
-
-          <strong id="calledCount">
-            0
-          </strong>
-
-          <span>
-            CALLED
+          <span class="info-label">
+            Called
           </span>
 
         </div>
@@ -710,240 +299,547 @@
       </div>
 
 
-      <div
-        id="lastNumber"
-        class="last-number"
-      >
+      <div class="number-box">
 
-        <div class="number">
+        <div style="font-size:15px;">
+          LAST NUMBER
+        </div>
+
+        <span id="lastNumber">
           —
-        </div>
-
-        <p>
-          Last Called Number
-        </p>
+        </span>
 
       </div>
 
 
-      <button
-        id="callButton"
-        onclick="callNumber()"
-      >
-        📢 CALL NEXT NUMBER
+      <button id="callButton">
+        🔢 CALL NUMBER
       </button>
 
-
-      <div
-        id="gameMessage"
-        class="message"
-      ></div>
-
-    </div>
-
-
-    <!-- PLAYERS -->
-
-    <div class="card">
-
-      <h3>
-        👥 Players
-      </h3>
-
-      <div
-        id="playersList"
-        class="players"
+      <button
+        id="refreshButton"
+        class="secondary"
       >
-      </div>
+        🔄 REFRESH GAME
+      </button>
 
-    </div>
-
-
-    <!-- BINGO CARD -->
-
-    <div class="card">
-
-      <div class="bingo-title">
-        🎟️ YOUR BINGO CARD
-      </div>
-
-
-      <div
-        id="bingoGrid"
-        class="bingo-grid"
-      ></div>
-
-
-      <p
-        style="
-          text-align:center;
-          color:#bbb;
-          font-size:12px;
-          margin-top:12px;
-        "
+      <button
+        id="backButton"
+        class="secondary"
       >
-        Tap a called number to mark it.
-      </p>
+        ← BACK
+      </button>
 
     </div>
 
 
-    <!-- CALLED NUMBERS -->
-
     <div class="card">
 
-      <h3>
-        📢 Called Numbers
-      </h3>
+      <h3>📢 Called Numbers</h3>
 
       <div
         id="calledNumbers"
-        class="called-list"
-      >
-      </div>
+        class="called"
+      ></div>
 
     </div>
 
-
-    <button
-      class="danger"
-      onclick="leaveGame()"
-    >
-      🚪 LEAVE GAME
-    </button>
-
-
   </div>
+
+
+  <div id="message"></div>
 
 
   <div class="footer">
-
-    Bot Geda • Fast • Fun • Fair 🎱
-
+    Bot Geda • Fast • Fun • Fair
   </div>
-
 
 </div>
 
 
 <script>
 
+  // ==========================================
+  // TELEGRAM WEB APP
+  // ==========================================
 
-// ========================================
-// TELEGRAM
-// ========================================
+  const tg = window.Telegram?.WebApp;
 
-const tg =
-  window.Telegram &&
-  window.Telegram.WebApp
-    ? window.Telegram.WebApp
-    : null;
-
-
-if (tg) {
-
-  tg.ready();
-
-  tg.expand();
-
-}
+  if (tg) {
+    tg.ready();
+    tg.expand();
+  }
 
 
-// ========================================
-// API
-// ========================================
+  // ==========================================
+  // SERVER URL
+  // ==========================================
 
-const API =
-  window.location.origin;
+  const API = window.location.origin;
 
 
-// ========================================
-// USER
-// ========================================
+  // ==========================================
+  // ELEMENTS
+  // ==========================================
 
-function getUser() {
+  const createButton =
+    document.getElementById("createButton");
 
-  if (
-    tg &&
-    tg.initDataUnsafe &&
-    tg.initDataUnsafe.user
-  ) {
+  const joinButton =
+    document.getElementById("joinButton");
 
-    return tg.initDataUnsafe.user;
+  const callButton =
+    document.getElementById("callButton");
+
+  const refreshButton =
+    document.getElementById("refreshButton");
+
+  const backButton =
+    document.getElementById("backButton");
+
+  const homeScreen =
+    document.getElementById("homeScreen");
+
+  const gameScreen =
+    document.getElementById("gameScreen");
+
+  const message =
+    document.getElementById("message");
+
+
+  // ==========================================
+  // MESSAGE
+  // ==========================================
+
+  function showMessage(text) {
+
+    message.textContent = text;
+
+    setTimeout(() => {
+      message.textContent = "";
+    }, 3000);
 
   }
 
 
-  let saved =
-    localStorage.getItem(
-      "bingo_guest"
-    );
+  // ==========================================
+  // LOAD GAME
+  // ==========================================
+
+  async function loadGame() {
+
+    try {
+
+      const response =
+        await fetch(API + "/api/game");
+
+      const data =
+        await response.json();
+
+      if (!data.success) {
+        showMessage("❌ Could not load game.");
+        return;
+      }
+
+      updateGame(data.game);
+
+    } catch (error) {
+
+      console.error(error);
+
+      showMessage(
+        "❌ Server connection failed."
+      );
+
+    }
+
+  }
 
 
-  if (!saved) {
+  // ==========================================
+  // UPDATE GAME DISPLAY
+  // ==========================================
 
-    saved = JSON.stringify({
+  function updateGame(game) {
 
-      id:
-        "guest-" +
-        Date.now(),
+    const players =
+      game.players
+        ? Object.keys(game.players).length
+        : 0;
 
-      first_name:
-        "Guest"
+    const called =
+      game.calledNumbers || [];
+
+
+    document.getElementById(
+      "playerCount"
+    ).textContent = players;
+
+
+    document.getElementById(
+      "gameStatus"
+    ).textContent =
+      (game.status || "waiting").toUpperCase();
+
+
+    document.getElementById(
+      "calledCount"
+    ).textContent = called.length;
+
+
+    document.getElementById(
+      "roomPlayers"
+    ).textContent = players;
+
+
+    document.getElementById(
+      "roomCalled"
+    ).textContent = called.length;
+
+
+    if (called.length > 0) {
+
+      document.getElementById(
+        "lastNumber"
+      ).textContent =
+        called[called.length - 1];
+
+    }
+
+
+    const calledContainer =
+      document.getElementById(
+        "calledNumbers"
+      );
+
+    calledContainer.innerHTML = "";
+
+    called.forEach(number => {
+
+      const span =
+        document.createElement("span");
+
+      span.textContent = number;
+
+      calledContainer.appendChild(span);
 
     });
 
-
-    localStorage.setItem(
-      "bingo_guest",
-      saved
-    );
-
   }
 
 
-  return JSON.parse(saved);
+  // ==========================================
+  // CREATE GAME
+  // ==========================================
 
-}
+  createButton.addEventListener(
+    "click",
+    async function() {
+
+      createButton.disabled = true;
+
+      showMessage("⏳ Creating game...");
+
+      try {
+
+        const response =
+          await fetch(
+            API + "/api/game/new",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type":
+                  "application/json"
+              }
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (!data.success) {
+
+          showMessage(
+            "❌ Could not create game."
+          );
+
+          return;
+
+        }
 
 
-// ========================================
-// STATE
-// ========================================
-
-let currentGame = null;
-
-let currentPlayer = null;
-
-let refreshTimer = null;
+        updateGame(data.game);
 
 
-// ========================================
-// CREATE GAME
-// ========================================
+        document.getElementById(
+          "gameIdInput"
+        ).value = data.game.id;
 
-async function createGame() {
 
-  showMessage(
-    "homeMessage",
-    "Creating game..."
+        homeScreen.style.display =
+          "none";
+
+        gameScreen.style.display =
+          "block";
+
+
+        showMessage(
+          "🎉 Bingo game created!"
+        );
+
+      } catch (error) {
+
+        console.error(error);
+
+        showMessage(
+          "❌ Server connection failed."
+        );
+
+      } finally {
+
+        createButton.disabled = false;
+
+      }
+
+    }
   );
 
 
-  try {
+  // ==========================================
+  // JOIN GAME
+  // ==========================================
 
-    const response =
-      await fetch(
-        API +
-        "/api/game/create",
-        {
+  joinButton.addEventListener(
+    "click",
+    async function() {
 
-          method: "POST",
+      const gameId =
+        document
+          .getElementById("gameIdInput")
+          .value.trim();
 
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
 
-          body:
-            JSON.stringify({
+      if (!gameId) {
+
+        showMessage(
+          "⚠️ Enter a Game ID first."
+        );
+
+        return;
+
+      }
+
+
+      joinButton.disabled = true;
+
+      showMessage("⏳ Joining game...");
+
+
+      try {
+
+        const playerId =
+          tg?.initDataUnsafe?.user?.id
+          ? String(
+              tg.initDataUnsafe.user.id
+            )
+          : "player_" + Date.now();
+
+
+        const playerName =
+          tg?.initDataUnsafe?.user?.first_name
+          || "Player";
+
+
+        const response =
+          await fetch(
+            API + "/api/game/join",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              body: JSON.stringify({
+                gameId: gameId,
+                playerId: playerId,
+                name: playerName
+              })
+            }
+          );
+
+
+        const data =
+          await response.json();
+
+
+        if (!data.success) {
+
+          showMessage(
+            "❌ " +
+            (data.message ||
+              "Could not join game.")
+          );
+
+          return;
+
+        }
+
+
+        updateGame(data.game);
+
+
+        homeScreen.style.display =
+          "none";
+
+        gameScreen.style.display =
+          "block";
+
+
+        showMessage(
+          "🎉 You joined the game!"
+        );
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        showMessage(
+          "❌ Server connection failed."
+        );
+
+      } finally {
+
+        joinButton.disabled = false;
+
+      }
+
+    }
+  );
+
+
+  // ==========================================
+  // CALL NUMBER
+  // ==========================================
+
+  callButton.addEventListener(
+    "click",
+    async function() {
+
+      callButton.disabled = true;
+
+      showMessage(
+        "🎱 Calling number..."
+      );
+
+
+      try {
+
+        const response =
+          await fetch(
+            API + "/api/game/call",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type":
+                  "application/json"
+              }
+            }
+          );
+
+
+        const data =
+          await response.json();
+
+
+        if (!data.success) {
+
+          showMessage(
+            "⚠️ " +
+            (data.message ||
+              "Could not call number.")
+          );
+
+          return;
+
+        }
+
+
+        updateGame(data.game);
+
+
+        showMessage(
+          "🎱 Number " +
+          data.number +
+          " called!"
+        );
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        showMessage(
+          "❌ Server connection failed."
+        );
+
+      } finally {
+
+        callButton.disabled = false;
+
+      }
+
+    }
+  );
+
+
+  // ==========================================
+  // REFRESH
+  // ==========================================
+
+  refreshButton.addEventListener(
+    "click",
+    async function() {
+
+      showMessage("🔄 Updating...");
+
+      await loadGame();
+
+      showMessage("✅ Game updated.");
+
+    }
+  );
+
+
+  // ==========================================
+  // BACK
+  // ==========================================
+
+  backButton.addEventListener(
+    "click",
+    function() {
+
+      gameScreen.style.display =
+        "none";
+
+      homeScreen.style.display =
+        "block";
+
+      loadGame();
+
+    }
+  );
+
+
+  // ==========================================
+  // INITIAL LOAD
+  // ==========================================
+
+  loadGame();
+
+</script>
+
+</body>
+</html>
