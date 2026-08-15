@@ -6,42 +6,30 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(__dirname));
 
 const PORT = process.env.PORT || 10000;
+
+// ========================================
+// SERVE MINI APP
+// ========================================
+
+app.use(express.static(__dirname));
+
 
 // ========================================
 // GAME ROOMS
 // ========================================
 
-let games = {};
+const games = {};
 
 
 // ========================================
-// CREATE NEW GAME
+// CREATE UNIQUE BINGO CARD
 // ========================================
 
-function createGame() {
+function createBingoCard() {
 
-  const gameId = Date.now().toString();
-
-  games[gameId] = {
-    id: gameId,
-    status: "waiting",
-    players: {},
-    calledNumbers: [],
-    createdAt: new Date().toISOString()
-  };
-
-  return games[gameId];
-}
-
-
-// ========================================
-// GENERATE BINGO CARD
-// ========================================
-
-function generateCard() {
+  const card = [];
 
   const ranges = [
     [1, 15],
@@ -50,8 +38,6 @@ function generateCard() {
     [46, 60],
     [61, 75]
   ];
-
-  const columns = [];
 
   for (let column = 0; column < 5; column++) {
 
@@ -65,29 +51,82 @@ function generateCard() {
       numbers.push(number);
     }
 
+    // Shuffle
     numbers.sort(() => Math.random() - 0.5);
 
-    columns.push(numbers.slice(0, 5));
-  }
+    for (let row = 0; row < 5; row++) {
 
+      if (column === 2 && row === 2) {
 
-  const card = [];
-
-  for (let row = 0; row < 5; row++) {
-
-    for (let column = 0; column < 5; column++) {
-
-      if (row === 2 && column === 2) {
         card.push("FREE");
+
       } else {
-        card.push(columns[column][row]);
+
+        card.push(numbers[row]);
+
       }
 
     }
 
   }
 
-  return card;
+  // Convert column-based array to row-based Bingo card
+  const finalCard = [];
+
+  for (let row = 0; row < 5; row++) {
+
+    for (let column = 0; column < 5; column++) {
+
+      finalCard.push(
+        card[column * 5 + row]
+      );
+
+    }
+
+  }
+
+  return finalCard;
+}
+
+
+// ========================================
+// CREATE GAME
+// ========================================
+
+function createNewGame() {
+
+  const id =
+    Date.now().toString();
+
+
+  games[id] = {
+
+    id: id,
+
+    calledNumbers: [],
+
+    status: "waiting",
+
+    players: {},
+
+    createdAt: new Date().toISOString()
+
+  };
+
+
+  return games[id];
+
+}
+
+
+// ========================================
+// GET GAME
+// ========================================
+
+function getGame(id) {
+
+  return games[id];
+
 }
 
 
@@ -111,10 +150,44 @@ app.get("/", (req, res) => {
 app.get("/api/health", (req, res) => {
 
   res.json({
+
     success: true,
+
     status: "OK",
+
     server: "Bingo Geda",
+
     time: new Date().toISOString()
+
+  });
+
+});
+
+
+// ========================================
+// GET DEFAULT GAME
+// ========================================
+
+app.get("/api/game", (req, res) => {
+
+  let game =
+    Object.values(games)[0];
+
+
+  if (!game) {
+
+    game =
+      createNewGame();
+
+  }
+
+
+  res.json({
+
+    success: true,
+
+    game: game
+
   });
 
 });
@@ -126,38 +199,54 @@ app.get("/api/health", (req, res) => {
 
 app.post("/api/game/create", (req, res) => {
 
-  const game = createGame();
+  const game =
+    createNewGame();
+
 
   res.json({
+
     success: true,
-    message: "🎱 New Bingo game created!",
+
+    message:
+      "🎱 Bingo game created!",
+
     game: game
+
   });
 
 });
 
 
 // ========================================
-// GET GAME
+// GET GAME BY ID
 // ========================================
 
-app.get("/api/game/:gameId", (req, res) => {
+app.get("/api/game/:id", (req, res) => {
 
   const game =
-    games[req.params.gameId];
+    getGame(req.params.id);
+
 
   if (!game) {
 
     return res.status(404).json({
+
       success: false,
-      message: "Game not found."
+
+      message:
+        "Game not found."
+
     });
 
   }
 
+
   res.json({
+
     success: true,
+
     game: game
+
   });
 
 });
@@ -167,55 +256,87 @@ app.get("/api/game/:gameId", (req, res) => {
 // JOIN GAME
 // ========================================
 
-app.post("/api/game/:gameId/join", (req, res) => {
+app.post("/api/game/:id/join", (req, res) => {
 
   const game =
-    games[req.params.gameId];
+    getGame(req.params.id);
+
 
   if (!game) {
 
     return res.status(404).json({
+
       success: false,
-      message: "Game not found."
+
+      message:
+        "Game not found."
+
     });
 
   }
 
 
-  const telegramUser =
+  const user =
     req.body.user || {};
 
 
   const userId =
     String(
-      telegramUser.id ||
+      user.id ||
       "guest-" + Date.now()
     );
 
 
-  if (!game.players[userId]) {
+  // Already joined?
 
-    game.players[userId] = {
+  if (game.players[userId]) {
 
-      id: userId,
+    return res.json({
 
-      firstName:
-        telegramUser.first_name ||
-        "Guest",
+      success: true,
 
-      username:
-        telegramUser.username ||
-        "",
+      message:
+        "Player already joined.",
 
-      card:
-        generateCard(),
+      player:
+        game.players[userId],
 
-      joinedAt:
-        new Date().toISOString()
+      game: game
 
-    };
+    });
 
   }
+
+
+  // Create player
+
+  const player = {
+
+    id: userId,
+
+    name:
+      user.first_name ||
+      "Guest",
+
+    username:
+      user.username ||
+      "",
+
+    card:
+      createBingoCard(),
+
+    joinedAt:
+      new Date().toISOString()
+
+  };
+
+
+  game.players[userId] =
+    player;
+
+
+  game.status =
+    "playing";
 
 
   res.json({
@@ -223,10 +344,9 @@ app.post("/api/game/:gameId/join", (req, res) => {
     success: true,
 
     message:
-      "🎉 Player joined Bingo Geda!",
+      "🎮 Player joined Bingo Geda!",
 
-    player:
-      game.players[userId],
+    player: player,
 
     game: game
 
@@ -239,24 +359,70 @@ app.post("/api/game/:gameId/join", (req, res) => {
 // CALL NEXT NUMBER
 // ========================================
 
-app.post("/api/game/:gameId/call", (req, res) => {
+app.post("/api/game/:id/call", (req, res) => {
 
   const game =
-    games[req.params.gameId];
+    getGame(req.params.id);
+
 
   if (!game) {
 
     return res.status(404).json({
+
       success: false,
-      message: "Game not found."
+
+      message:
+        "Game not found."
+
     });
 
   }
 
 
-  if (game.calledNumbers.length >= 75) {
+  if (
+    game.status === "finished"
+  ) {
 
-    game.status = "finished";
+    return res.status(400).json({
+
+      success: false,
+
+      message:
+        "Game is already finished."
+
+    });
+
+  }
+
+
+  const allNumbers = [];
+
+
+  for (
+    let number = 1;
+    number <= 75;
+    number++
+  ) {
+
+    allNumbers.push(number);
+
+  }
+
+
+  const availableNumbers =
+    allNumbers.filter(
+      number =>
+        !game.calledNumbers.includes(number)
+    );
+
+
+  if (
+    availableNumbers.length === 0
+  ) {
+
+    game.status =
+      "finished";
+
 
     return res.json({
 
@@ -272,32 +438,24 @@ app.post("/api/game/:gameId/call", (req, res) => {
   }
 
 
-  const available = [];
-
-  for (let i = 1; i <= 75; i++) {
-
-    if (!game.calledNumbers.includes(i)) {
-
-      available.push(i);
-
-    }
-
-  }
-
-
-  const index =
+  const randomIndex =
     Math.floor(
-      Math.random() * available.length
+      Math.random() *
+      availableNumbers.length
     );
 
 
   const number =
-    available[index];
+    availableNumbers[randomIndex];
 
 
-  game.calledNumbers.push(number);
+  game.calledNumbers.push(
+    number
+  );
 
-  game.status = "playing";
+
+  game.status =
+    "playing";
 
 
   res.json({
@@ -317,17 +475,23 @@ app.post("/api/game/:gameId/call", (req, res) => {
 
 
 // ========================================
-// LIST GAMES
+// NEW GAME
 // ========================================
 
-app.get("/api/games", (req, res) => {
+app.post("/api/game/new", (req, res) => {
+
+  const game =
+    createNewGame();
+
 
   res.json({
 
     success: true,
 
-    games:
-      Object.values(games)
+    message:
+      "🎱 New Bingo game created!",
+
+    game: game
 
   });
 
@@ -335,7 +499,193 @@ app.get("/api/games", (req, res) => {
 
 
 // ========================================
-// START SERVER
+// LEGACY JOIN
+// ========================================
+
+app.post("/api/game/join", (req, res) => {
+
+  let game =
+    Object.values(games)[0];
+
+
+  if (!game) {
+
+    game =
+      createNewGame();
+
+  }
+
+
+  const user =
+    req.body.user || {};
+
+
+  const userId =
+    String(
+      user.id ||
+      "guest-" + Date.now()
+    );
+
+
+  if (!game.players[userId]) {
+
+    game.players[userId] = {
+
+      id: userId,
+
+      name:
+        user.first_name ||
+        "Guest",
+
+      username:
+        user.username ||
+        "",
+
+      card:
+        createBingoCard(),
+
+      joinedAt:
+        new Date().toISOString()
+
+    };
+
+  }
+
+
+  game.status =
+    "playing";
+
+
+  res.json({
+
+    success: true,
+
+    message:
+      "🎮 Player joined Bingo Geda!",
+
+    player:
+      game.players[userId],
+
+    players:
+      Object.keys(game.players).length,
+
+    game: game
+
+  });
+
+});
+
+
+// ========================================
+// LEGACY CALL
+// ========================================
+
+app.post("/api/game/call", (req, res) => {
+
+  let game =
+    Object.values(games)[0];
+
+
+  if (!game) {
+
+    return res.status(404).json({
+
+      success: false,
+
+      message:
+        "No active game."
+
+    });
+
+  }
+
+
+  if (
+    game.status === "finished"
+  ) {
+
+    return res.status(400).json({
+
+      success: false,
+
+      message:
+        "Game is already finished."
+
+    });
+
+  }
+
+
+  const availableNumbers =
+    Array.from(
+      { length: 75 },
+      (_, i) => i + 1
+    ).filter(
+      number =>
+        !game.calledNumbers.includes(number)
+    );
+
+
+  if (
+    availableNumbers.length === 0
+  ) {
+
+    game.status =
+      "finished";
+
+
+    return res.json({
+
+      success: false,
+
+      message:
+        "All numbers have been called.",
+
+      game: game
+
+    });
+
+  }
+
+
+  const randomIndex =
+    Math.floor(
+      Math.random() *
+      availableNumbers.length
+    );
+
+
+  const number =
+    availableNumbers[randomIndex];
+
+
+  game.calledNumbers.push(
+    number
+  );
+
+
+  game.status =
+    "playing";
+
+
+  res.json({
+
+    success: true,
+
+    number: number,
+
+    calledNumbers:
+      game.calledNumbers,
+
+    game: game
+
+  });
+
+});
+
+
+// ========================================
+// SERVER
 // ========================================
 
 app.listen(PORT, () => {
