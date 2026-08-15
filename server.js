@@ -1,169 +1,59 @@
-const express = require("express");
-const cors = require("cors");
-const path = require("path");
-
-const app = express();
-
-app.use(cors());
-app.use(express.json());
-
-// ================================
-// PORT
-// ================================
-const PORT = process.env.PORT || 10000;
+M
+My Workspace
 
 
-// ================================
-// SERVE MINI APP
-// ================================
-// This serves index.html from the
-// root of the GitHub repository.
-app.use(express.static(path.join(__dirname)));
+s
+My project
+
+Production
+
+bot-geda-bingo
 
 
-// ================================
-// CURRENT BINGO GAME
-// ================================
-let game = {
-  id: Date.now(),
-  calledNumbers: [],
-  status: "waiting",
-  players: 0
-};
+dep-da0doc0u01pc738udh40
+Your free instance will spin down with inactivity, which can delay requests by 50 seconds or more.
+Upgrade now
+Initialize Bingo Geda server with API endpoints
+Status
+Deploy succeeded|Live
+Duration
+11.0s
+Deployed
+Aug 16, 2026
+at
+12:37:53 AM
+GMT+3
+
+Trigger
+Rolled back by you via Dashboard
+Source
+f5574a1
+Notices
+Rolled back to dep-da0dfu0u01pc738ttsr0
+
+All logs
+Search
+Search logs
+
+Aug 16, 12:36 AM - 12:39 AM
+GMT+3
 
 
-// ================================
-// HOME / MINI APP
-// ================================
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
 
+==> Deploying...
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+==> Running 'node server.js'
+🎱 Bingo Geda Server running on port 10000
+==> Your service is live 🎉
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://bot-geda-bingo.onrender.com
+==> 
+==> ///////////////////////////////////////////////////////////
+Need better ways to work with logs? Try theRender CLI, Render MCP Server, or set up a log stream integration 
 
-// ================================
-// GET CURRENT GAME
-// ================================
-app.get("/api/game", (req, res) => {
-  res.json({
-    success: true,
-    game: game
-  });
-});
+0 services selected:
 
+Move
 
-// ================================
-// CALL NEXT BINGO NUMBER
-// ================================
-app.post("/api/game/call", (req, res) => {
-
-  if (game.status === "finished") {
-    return res.status(400).json({
-      success: false,
-      message: "Game is already finished."
-    });
-  }
-
-  const allNumbers = [];
-
-  for (let i = 1; i <= 75; i++) {
-    allNumbers.push(i);
-  }
-
-  const availableNumbers = allNumbers.filter(
-    number => !game.calledNumbers.includes(number)
-  );
-
-  if (availableNumbers.length === 0) {
-
-    game.status = "finished";
-
-    return res.json({
-      success: false,
-      message: "All numbers have been called.",
-      game: game
-    });
-  }
-
-  const randomIndex =
-    Math.floor(Math.random() * availableNumbers.length);
-
-  const number = availableNumbers[randomIndex];
-
-  game.calledNumbers.push(number);
-
-  game.status = "playing";
-
-  res.json({
-    success: true,
-    number: number,
-    calledNumbers: game.calledNumbers,
-    game: game
-  });
-
-});
-
-
-// ================================
-// START NEW GAME
-// ================================
-app.post("/api/game/new", (req, res) => {
-
-  game = {
-    id: Date.now(),
-    calledNumbers: [],
-    status: "waiting",
-    players: 0
-  };
-
-  res.json({
-    success: true,
-    message: "🎱 New Bingo game started!",
-    game: game
-  });
-
-});
-
-
-// ================================
-// JOIN GAME
-// ================================
-app.post("/api/game/join", (req, res) => {
-
-  game.players++;
-
-  game.status = "playing";
-
-  res.json({
-    success: true,
-    message: "Player joined Bingo Geda!",
-    players: game.players,
-    game: game
-  });
-
-});
-
-
-// ================================
-// HEALTH CHECK
-// ================================
-app.get("/api/health", (req, res) => {
-
-  res.json({
-    status: "OK",
-    server: "Bingo Geda",
-    time: new Date().toISOString()
-  });
-
-});
-
-
-// ================================
-// SERVER START
-// ================================
-app.listen(PORT, () => {
-
-  console.log(
-    `🎱 Bingo Geda Server running on port ${PORT}`
-  );
-
-});
