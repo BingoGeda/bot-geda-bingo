@@ -3,350 +3,539 @@
 
 <head>
 
-<meta charset="UTF-8">
+  <meta charset="UTF-8">
 
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0"
->
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+  >
 
-<title>Bingo Geda</title>
+  <title>Bingo Geda</title>
 
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
 
-<style>
+    * {
+      box-sizing: border-box;
+    }
 
-* {
-  box-sizing: border-box;
-}
+    body {
 
-body {
+      margin: 0;
 
-  margin: 0;
+      min-height: 100vh;
 
-  padding: 20px;
+      font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
 
-  font-family:
-    Arial,
-    sans-serif;
+      background:
+        linear-gradient(
+          135deg,
+          #35105e,
+          #6a1b9a,
+          #251039
+        );
 
-  background:
-    linear-gradient(
-      135deg,
-      #35105e,
-      #6a1b9a
-    );
+      color: white;
 
-  color: white;
+      padding: 20px;
 
-  min-height: 100vh;
+    }
 
-}
 
-.container {
+    .container {
 
-  max-width: 500px;
+      max-width: 500px;
 
-  margin: auto;
+      margin: auto;
 
-}
+    }
 
-.header {
 
-  text-align: center;
+    .header {
 
-  margin-bottom: 25px;
+      text-align: center;
 
-}
+      margin-bottom: 20px;
 
-.logo {
+    }
 
-  font-size: 55px;
 
-}
+    .logo {
 
-h1 {
+      font-size: 55px;
 
-  margin: 5px 0;
+      margin-bottom: 5px;
 
-  font-size: 32px;
+    }
 
-}
 
-.subtitle {
+    h1 {
 
-  color: #ddd;
+      margin: 0;
 
-}
+      font-size: 34px;
 
-.card {
+      font-weight: 800;
 
-  background:
-    rgba(255,255,255,0.12);
+    }
 
-  border-radius: 20px;
 
-  padding: 20px;
+    .subtitle {
 
-  margin-bottom: 18px;
+      color: #ddd;
 
-  backdrop-filter:
-    blur(10px);
+      margin-top: 6px;
 
-}
+      font-size: 15px;
 
-.stats {
+    }
 
-  display: grid;
 
-  grid-template-columns:
-    repeat(3, 1fr);
+    .card {
 
-  gap: 10px;
+      background:
+        rgba(255,255,255,0.10);
 
-}
+      border:
+        1px solid
+        rgba(255,255,255,0.15);
 
-.stat {
+      border-radius: 22px;
 
-  text-align: center;
+      padding: 20px;
 
-  background:
-    rgba(255,255,255,0.08);
+      margin-bottom: 18px;
 
-  padding: 12px;
+      backdrop-filter:
+        blur(12px);
 
-  border-radius: 12px;
+      box-shadow:
+        0 10px 30px
+        rgba(0,0,0,0.20);
 
-}
+    }
 
-.stat strong {
 
-  display: block;
+    .room-title {
 
-  font-size: 22px;
+      text-align: center;
 
-  margin-bottom: 5px;
+      font-size: 14px;
 
-}
+      color: #ddd;
 
-button {
+      margin-bottom: 7px;
 
-  width: 100%;
+    }
 
-  border: none;
 
-  padding: 15px;
+    .room-code {
 
-  margin-top: 10px;
+      text-align: center;
 
-  border-radius: 14px;
+      font-size: 34px;
 
-  background:
-    linear-gradient(
-      90deg,
-      #ffb300,
-      #ff6f00
-    );
+      font-weight: 900;
 
-  color: white;
+      letter-spacing: 5px;
 
-  font-size: 17px;
+      color: #ffb300;
 
-  font-weight: bold;
+      margin-bottom: 15px;
 
-  cursor: pointer;
+    }
 
-}
 
-button:active {
+    .game-info {
 
-  transform:
-    scale(0.98);
+      display: grid;
 
-}
+      grid-template-columns:
+        repeat(3,1fr);
 
-.secondary {
+      gap: 8px;
 
-  background:
-    rgba(255,255,255,0.12);
+      margin-bottom: 18px;
 
-}
+    }
 
-.danger {
 
-  background:
-    #c62828;
+    .info {
 
-}
+      text-align: center;
 
-.hidden {
+      background:
+        rgba(255,255,255,0.08);
 
-  display: none;
+      border-radius: 12px;
 
-}
+      padding: 12px 5px;
 
-.message {
+    }
 
-  text-align: center;
 
-  padding: 10px;
+    .info strong {
 
-  color: #ffdf80;
+      display: block;
 
-  min-height: 25px;
+      font-size: 20px;
 
-}
+      margin-bottom: 4px;
 
-.game-id {
+    }
 
-  font-size: 12px;
 
-  color: #ccc;
+    .info span {
 
-  text-align: center;
+      font-size: 11px;
 
-  word-break: break-all;
+      color: #ccc;
 
-}
+    }
 
 
-/* =========================
-   BINGO CARD
-========================= */
+    button {
 
-.bingo-title {
+      width: 100%;
 
-  text-align: center;
+      border: none;
 
-  font-size: 26px;
+      padding: 15px;
 
-  margin-bottom: 15px;
+      border-radius: 14px;
 
-}
+      background:
+        linear-gradient(
+          90deg,
+          #ffb300,
+          #ff6f00
+        );
 
-.bingo-grid {
+      color: white;
 
-  display: grid;
+      font-size: 17px;
 
-  grid-template-columns:
-    repeat(5, 1fr);
+      font-weight: bold;
 
-  gap: 5px;
+      cursor: pointer;
 
-}
+      margin-top: 8px;
 
-.bingo-letter {
+    }
 
-  background: #ffb300;
 
-  color: #35105e;
+    button:active {
 
-  font-weight: bold;
+      transform:
+        scale(0.98);
 
-  text-align: center;
+    }
 
-  padding: 10px 0;
 
-  border-radius: 6px;
+    .secondary {
 
-}
+      background:
+        rgba(255,255,255,0.12);
 
-.bingo-number {
+    }
 
-  background: white;
 
-  color: #251039;
+    .danger {
 
-  text-align: center;
+      background:
+        linear-gradient(
+          90deg,
+          #d32f2f,
+          #b71c1c
+        );
 
-  padding: 14px 0;
+    }
 
-  border-radius: 6px;
 
-  font-weight: bold;
+    input {
 
-  font-size: 16px;
+      width: 100%;
 
-  cursor: pointer;
+      padding: 15px;
 
-}
+      border: none;
 
-.bingo-number.marked {
+      outline: none;
 
-  background: #ffb300;
+      border-radius: 13px;
 
-  color: #35105e;
+      font-size: 18px;
 
-}
+      text-align: center;
 
-.free {
+      text-transform: uppercase;
 
-  background: #ffb300;
+      letter-spacing: 4px;
 
-  color: #35105e;
+      margin-bottom: 8px;
 
-}
+    }
 
 
-/* =========================
-   CALLED NUMBER
-========================= */
+    .message {
 
-.called {
+      text-align: center;
 
-  text-align: center;
+      margin: 12px 0;
 
-  margin-top: 20px;
+      font-size: 14px;
 
-}
+      min-height: 20px;
 
-.called-number {
+      color: #ffda6a;
 
-  font-size: 55px;
+    }
 
-  font-weight: bold;
 
-  color: #ffb300;
+    .players {
 
-}
+      margin-top: 15px;
 
-.called-list {
+    }
 
-  display: flex;
 
-  flex-wrap: wrap;
+    .player {
 
-  gap: 6px;
+      display: flex;
 
-  justify-content: center;
+      justify-content:
+        space-between;
 
-  margin-top: 10px;
+      align-items: center;
 
-}
+      background:
+        rgba(255,255,255,0.08);
 
-.called-ball {
+      padding: 10px 12px;
 
-  width: 35px;
+      border-radius: 10px;
 
-  height: 35px;
+      margin-top: 7px;
 
-  display: flex;
+      font-size: 14px;
 
-  align-items: center;
+    }
 
-  justify-content: center;
 
-  background: white;
+    .host {
 
-  color: #35105e;
+      color: #ffb300;
 
-  border-radius: 50%;
+      font-weight: bold;
 
-  font-weight: bold;
+    }
 
-}
 
-</style>
+    .last-number {
+
+      text-align: center;
+
+      margin: 15px 0;
+
+    }
+
+
+    .last-number .number {
+
+      width: 95px;
+
+      height: 95px;
+
+      margin: auto;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      border-radius: 50%;
+
+      background:
+        linear-gradient(
+          135deg,
+          #ffb300,
+          #ff6f00
+        );
+
+      font-size: 38px;
+
+      font-weight: 900;
+
+      box-shadow:
+        0 8px 25px
+        rgba(0,0,0,0.3);
+
+    }
+
+
+    .last-number p {
+
+      color: #ccc;
+
+      font-size: 13px;
+
+    }
+
+
+    .bingo-title {
+
+      text-align: center;
+
+      font-size: 25px;
+
+      font-weight: 800;
+
+      margin-bottom: 12px;
+
+    }
+
+
+    .bingo-grid {
+
+      display: grid;
+
+      grid-template-columns:
+        repeat(5,1fr);
+
+      gap: 5px;
+
+    }
+
+
+    .letter {
+
+      background: #ffb300;
+
+      color: #35105e;
+
+      font-weight: bold;
+
+      text-align: center;
+
+      padding: 10px 0;
+
+      border-radius: 6px;
+
+    }
+
+
+    .number-cell {
+
+      background: white;
+
+      color: #251039;
+
+      text-align: center;
+
+      padding: 13px 0;
+
+      border-radius: 6px;
+
+      font-weight: bold;
+
+      font-size: 15px;
+
+      cursor: pointer;
+
+      transition: 0.15s;
+
+    }
+
+
+    .number-cell:hover {
+
+      transform:
+        scale(1.03);
+
+    }
+
+
+    .number-cell.called {
+
+      background: #ffb300;
+
+      color: #35105e;
+
+    }
+
+
+    .number-cell.marked {
+
+      background: #00c853;
+
+      color: white;
+
+    }
+
+
+    .number-cell.free {
+
+      background: #ffb300;
+
+      color: #35105e;
+
+      cursor: default;
+
+    }
+
+
+    .called-list {
+
+      display: flex;
+
+      flex-wrap: wrap;
+
+      gap: 6px;
+
+      margin-top: 12px;
+
+    }
+
+
+    .called-number {
+
+      background:
+        rgba(255,255,255,0.12);
+
+      padding: 7px 9px;
+
+      border-radius: 8px;
+
+      font-size: 13px;
+
+    }
+
+
+    .hidden {
+
+      display: none !important;
+
+    }
+
+
+    .footer {
+
+      text-align: center;
+
+      color: #bbb;
+
+      font-size: 12px;
+
+      margin-top: 20px;
+
+      padding-bottom: 10px;
+
+    }
+
+  </style>
 
 </head>
 
@@ -356,209 +545,282 @@ button:active {
 <div class="container">
 
 
-<!-- =========================
-     HEADER
-========================= -->
+  <!-- HEADER -->
 
-<div class="header">
+  <div class="header">
 
-  <div class="logo">🎱</div>
+    <div class="logo">🎱</div>
 
-  <h1>BINGO GEDA</h1>
+    <h1>BINGO GEDA</h1>
 
-  <div class="subtitle">
-    Multiplayer Bingo on Telegram
-  </div>
-
-</div>
-
-
-<!-- =========================
-     HOME
-========================= -->
-
-<div id="home">
-
-
-<div class="card">
-
-  <div class="stats">
-
-    <div class="stat">
-
-      <strong id="players">
-        0
-      </strong>
-
-      Players
-
-    </div>
-
-
-    <div class="stat">
-
-      <strong id="status">
-        WAITING
-      </strong>
-
-      Status
-
-    </div>
-
-
-    <div class="stat">
-
-      <strong id="called">
-        0
-      </strong>
-
-      Called
-
+    <div class="subtitle">
+      Multiplayer Bingo on Telegram
     </div>
 
   </div>
 
 
-  <button
-    onclick="createGame()"
-  >
-    🎱 CREATE GAME
-  </button>
+  <!-- HOME -->
+
+  <div id="homeScreen">
 
 
-  <button
-    class="secondary"
-    onclick="joinGame()"
-  >
-    🎮 JOIN GAME
-  </button>
+    <div class="card">
+
+      <h2 style="text-align:center;">
+        🎮 Welcome to Bingo Geda
+      </h2>
+
+      <p
+        style="
+          text-align:center;
+          color:#ccc;
+          line-height:1.5;
+        "
+      >
+        Create a Bingo room and invite
+        your friends to play together.
+      </p>
 
 
-</div>
+      <button
+        onclick="createGame()"
+      >
+        🎱 CREATE GAME
+      </button>
 
-
-<div
-  id="message"
-  class="message"
-></div>
-
-
-</div>
-
-
-<!-- =========================
-     GAME
-========================= -->
-
-<div
-  id="game"
-  class="hidden"
->
-
-
-<div class="card">
-
-  <div class="game-id">
-
-    Game ID:
-    <span id="gameId"></span>
-
-  </div>
-
-
-  <div class="bingo-title">
-    BINGO
-  </div>
-
-
-  <div class="bingo-grid">
-
-    <div class="bingo-letter">B</div>
-    <div class="bingo-letter">I</div>
-    <div class="bingo-letter">N</div>
-    <div class="bingo-letter">G</div>
-    <div class="bingo-letter">O</div>
-
-
-    <div id="cell-0" class="bingo-number"></div>
-    <div id="cell-1" class="bingo-number"></div>
-    <div id="cell-2" class="bingo-number"></div>
-    <div id="cell-3" class="bingo-number"></div>
-    <div id="cell-4" class="bingo-number"></div>
-
-    <div id="cell-5" class="bingo-number"></div>
-    <div id="cell-6" class="bingo-number"></div>
-    <div id="cell-7" class="bingo-number"></div>
-    <div id="cell-8" class="bingo-number"></div>
-    <div id="cell-9" class="bingo-number"></div>
-
-    <div id="cell-10" class="bingo-number"></div>
-    <div id="cell-11" class="bingo-number"></div>
-    <div id="cell-12" class="bingo-number"></div>
-    <div id="cell-13" class="bingo-number"></div>
-    <div id="cell-14" class="bingo-number"></div>
-
-    <div id="cell-15" class="bingo-number"></div>
-    <div id="cell-16" class="bingo-number"></div>
-    <div id="cell-17" class="bingo-number"></div>
-    <div id="cell-18" class="bingo-number"></div>
-    <div id="cell-19" class="bingo-number"></div>
-
-    <div id="cell-20" class="bingo-number"></div>
-    <div id="cell-21" class="bingo-number"></div>
-    <div id="cell-22" class="bingo-number"></div>
-    <div id="cell-23" class="bingo-number"></div>
-    <div id="cell-24" class="bingo-number"></div>
-
-  </div>
-
-
-  <div class="called">
-
-    <div>
-      LAST CALLED
     </div>
+
+
+    <div class="card">
+
+      <h3 style="text-align:center;">
+        👥 JOIN A GAME
+      </h3>
+
+      <input
+        id="roomInput"
+        maxlength="6"
+        placeholder="ROOM CODE"
+      >
+
+      <button
+        class="secondary"
+        onclick="joinGame()"
+      >
+        🎮 JOIN GAME
+      </button>
+
+    </div>
+
 
     <div
-      id="lastCalled"
-      class="called-number"
-    >
-      —
-    </div>
+      id="homeMessage"
+      class="message"
+    ></div>
 
-
-    <div class="called-list"
-         id="calledList">
-    </div>
 
   </div>
 
 
-  <button
-    onclick="joinCurrentGame()"
+  <!-- GAME -->
+
+  <div
+    id="gameScreen"
+    class="hidden"
   >
-    🎮 JOIN THIS GAME
-  </button>
 
 
-  <button
-    onclick="callNumber()"
-  >
-    📢 CALL NEXT NUMBER
-  </button>
+    <!-- ROOM -->
+
+    <div class="card">
+
+      <div class="room-title">
+        ROOM CODE
+      </div>
+
+      <div
+        id="roomCode"
+        class="room-code"
+      >
+        ------
+      </div>
+
+      <button
+        class="secondary"
+        onclick="copyRoomCode()"
+      >
+        📋 COPY ROOM CODE
+      </button>
+
+      <button
+        class="secondary"
+        onclick="shareRoom()"
+      >
+        📤 SHARE ROOM
+      </button>
+
+    </div>
 
 
-  <button
-    class="danger"
-    onclick="location.reload()"
-  >
-    ↩️ BACK
-  </button>
+    <!-- GAME INFO -->
 
-</div>
+    <div class="card">
+
+      <div class="game-info">
+
+        <div class="info">
+
+          <strong id="playersCount">
+            0
+          </strong>
+
+          <span>
+            PLAYERS
+          </span>
+
+        </div>
 
 
-</div>
+        <div class="info">
+
+          <strong id="status">
+            WAITING
+          </strong>
+
+          <span>
+            STATUS
+          </span>
+
+        </div>
+
+
+        <div class="info">
+
+          <strong id="calledCount">
+            0
+          </strong>
+
+          <span>
+            CALLED
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div
+        id="lastNumber"
+        class="last-number"
+      >
+
+        <div class="number">
+          —
+        </div>
+
+        <p>
+          Last Called Number
+        </p>
+
+      </div>
+
+
+      <button
+        id="callButton"
+        onclick="callNumber()"
+      >
+        📢 CALL NEXT NUMBER
+      </button>
+
+
+      <div
+        id="gameMessage"
+        class="message"
+      ></div>
+
+    </div>
+
+
+    <!-- PLAYERS -->
+
+    <div class="card">
+
+      <h3>
+        👥 Players
+      </h3>
+
+      <div
+        id="playersList"
+        class="players"
+      >
+      </div>
+
+    </div>
+
+
+    <!-- BINGO CARD -->
+
+    <div class="card">
+
+      <div class="bingo-title">
+        🎟️ YOUR BINGO CARD
+      </div>
+
+
+      <div
+        id="bingoGrid"
+        class="bingo-grid"
+      ></div>
+
+
+      <p
+        style="
+          text-align:center;
+          color:#bbb;
+          font-size:12px;
+          margin-top:12px;
+        "
+      >
+        Tap a called number to mark it.
+      </p>
+
+    </div>
+
+
+    <!-- CALLED NUMBERS -->
+
+    <div class="card">
+
+      <h3>
+        📢 Called Numbers
+      </h3>
+
+      <div
+        id="calledNumbers"
+        class="called-list"
+      >
+      </div>
+
+    </div>
+
+
+    <button
+      class="danger"
+      onclick="leaveGame()"
+    >
+      🚪 LEAVE GAME
+    </button>
+
+
+  </div>
+
+
+  <div class="footer">
+
+    Bot Geda • Fast • Fun • Fair 🎱
+
+  </div>
 
 
 </div>
@@ -573,7 +835,10 @@ button:active {
 
 const tg =
   window.Telegram &&
-  window.Telegram.WebApp;
+  window.Telegram.WebApp
+    ? window.Telegram.WebApp
+    : null;
+
 
 if (tg) {
 
@@ -593,19 +858,10 @@ const API =
 
 
 // ========================================
-// CURRENT GAME
-// ========================================
-
-let currentGame = null;
-
-let currentPlayer = null;
-
-
-// ========================================
 // USER
 // ========================================
 
-function getTelegramUser() {
+function getUser() {
 
   if (
     tg &&
@@ -618,34 +874,48 @@ function getTelegramUser() {
   }
 
 
-  return {
+  let saved =
+    localStorage.getItem(
+      "bingo_guest"
+    );
 
-    id:
-      "guest-" +
-      Date.now(),
 
-    first_name:
-      "Guest",
+  if (!saved) {
 
-    username:
-      ""
+    saved = JSON.stringify({
 
-  };
+      id:
+        "guest-" +
+        Date.now(),
+
+      first_name:
+        "Guest"
+
+    });
+
+
+    localStorage.setItem(
+      "bingo_guest",
+      saved
+    );
+
+  }
+
+
+  return JSON.parse(saved);
 
 }
 
 
 // ========================================
-// MESSAGE
+// STATE
 // ========================================
 
-function showMessage(text) {
+let currentGame = null;
 
-  document.getElementById(
-    "message"
-  ).textContent = text;
+let currentPlayer = null;
 
-}
+let refreshTimer = null;
 
 
 // ========================================
@@ -655,7 +925,8 @@ function showMessage(text) {
 async function createGame() {
 
   showMessage(
-    "⏳ Creating game..."
+    "homeMessage",
+    "Creating game..."
   );
 
 
@@ -670,564 +941,9 @@ async function createGame() {
           method: "POST",
 
           headers: {
-
             "Content-Type":
               "application/json"
-
           },
 
-          body: JSON.stringify({
-
-            user:
-              getTelegramUser()
-
-          })
-
-        }
-      );
-
-
-    const data =
-      await response.json();
-
-
-    if (!data.success) {
-
-      throw new Error(
-        data.message ||
-        "Could not create game"
-      );
-
-    }
-
-
-    currentGame =
-      data.game;
-
-
-    await joinCreatedGame();
-
-
-  }
-
-  catch (error) {
-
-    showMessage(
-      "❌ " +
-      error.message
-    );
-
-  }
-
-}
-
-
-// ========================================
-// JOIN CREATED GAME
-// ========================================
-
-async function joinCreatedGame() {
-
-  const response =
-    await fetch(
-
-      API +
-      "/api/game/" +
-      currentGame.id +
-      "/join",
-
-      {
-
-        method: "POST",
-
-        headers: {
-
-          "Content-Type":
-            "application/json"
-
-        },
-
-        body: JSON.stringify({
-
-          user:
-            getTelegramUser()
-
-        })
-
-      }
-
-    );
-
-
-  const data =
-    await response.json();
-
-
-  if (!data.success) {
-
-    throw new Error(
-      data.message ||
-      "Could not join game"
-    );
-
-  }
-
-
-  currentGame =
-    data.game;
-
-  currentPlayer =
-    data.player;
-
-
-  openGame();
-
-}
-
-
-// ========================================
-// JOIN GAME
-// ========================================
-
-async function joinGame() {
-
-  showMessage(
-    "⏳ Loading game..."
-  );
-
-
-  try {
-
-    const response =
-      await fetch(
-        API +
-        "/api/game"
-      );
-
-
-    const data =
-      await response.json();
-
-
-    if (!data.success) {
-
-      throw new Error(
-        data.message ||
-        "Game not found"
-      );
-
-    }
-
-
-    currentGame =
-      data.game;
-
-
-    await joinCurrentGame();
-
-  }
-
-  catch (error) {
-
-    showMessage(
-      "❌ " +
-      error.message
-    );
-
-  }
-
-}
-
-
-// ========================================
-// JOIN CURRENT GAME
-// ========================================
-
-async function joinCurrentGame() {
-
-  if (!currentGame) {
-
-    const response =
-      await fetch(
-        API +
-        "/api/game"
-      );
-
-    const data =
-      await response.json();
-
-    currentGame =
-      data.game;
-
-  }
-
-
-  try {
-
-    const response =
-      await fetch(
-
-        API +
-        "/api/game/" +
-        currentGame.id +
-        "/join",
-
-        {
-
-          method: "POST",
-
-          headers: {
-
-            "Content-Type":
-              "application/json"
-
-          },
-
-          body: JSON.stringify({
-
-            user:
-              getTelegramUser()
-
-          })
-
-        }
-
-      );
-
-
-    const data =
-      await response.json();
-
-
-    if (!data.success) {
-
-      throw new Error(
-        data.message ||
-        "Could not join"
-      );
-
-    }
-
-
-    currentGame =
-      data.game;
-
-    currentPlayer =
-      data.player;
-
-
-    openGame();
-
-  }
-
-  catch (error) {
-
-    showMessage(
-      "❌ " +
-      error.message
-    );
-
-  }
-
-}
-
-
-// ========================================
-// OPEN GAME
-// ========================================
-
-function openGame() {
-
-  document
-    .getElementById("home")
-    .classList.add("hidden");
-
-
-  document
-    .getElementById("game")
-    .classList.remove("hidden");
-
-
-  document
-    .getElementById("gameId")
-    .textContent =
-      currentGame.id;
-
-
-  updateGameUI();
-
-}
-
-
-// ========================================
-// UPDATE UI
-// ========================================
-
-function updateGameUI() {
-
-  if (!currentGame) return;
-
-
-  const playerCount =
-    Object.keys(
-      currentGame.players || {}
-    ).length;
-
-
-  document
-    .getElementById("players")
-    .textContent =
-      playerCount;
-
-
-  document
-    .getElementById("status")
-    .textContent =
-      (
-        currentGame.status ||
-        "waiting"
-      ).toUpperCase();
-
-
-  document
-    .getElementById("called")
-    .textContent =
-      (
-        currentGame.calledNumbers ||
-        []
-      ).length;
-
-
-  const numbers =
-    currentGame.calledNumbers ||
-    [];
-
-
-  const last =
-    numbers.length
-      ? numbers[numbers.length - 1]
-      : "—";
-
-
-  document
-    .getElementById("lastCalled")
-    .textContent =
-      last;
-
-
-  const list =
-    document.getElementById(
-      "calledList"
-    );
-
-
-  list.innerHTML = "";
-
-
-  numbers
-    .slice()
-    .reverse()
-    .forEach(number => {
-
-      const ball =
-        document.createElement(
-          "div"
-        );
-
-      ball.className =
-        "called-ball";
-
-      ball.textContent =
-        number;
-
-      list.appendChild(ball);
-
-    });
-
-
-  renderCard();
-
-}
-
-
-// ========================================
-// RENDER CARD
-// ========================================
-
-function renderCard() {
-
-  if (!currentPlayer) return;
-
-
-  const card =
-    currentPlayer.card ||
-    [];
-
-
-  card.forEach(
-    (value, index) => {
-
-      const cell =
-        document.getElementById(
-          "cell-" + index
-        );
-
-
-      if (!cell) return;
-
-
-      cell.textContent =
-        value;
-
-
-      cell.classList.remove(
-        "marked"
-      );
-
-
-      if (value === "FREE") {
-
-        cell.classList.add(
-          "free"
-        );
-
-      }
-
-    }
-  );
-
-}
-
-
-// ========================================
-// CALL NUMBER
-// ========================================
-
-async function callNumber() {
-
-  if (!currentGame) {
-
-    return;
-
-  }
-
-
-  try {
-
-    const response =
-      await fetch(
-
-        API +
-        "/api/game/" +
-        currentGame.id +
-        "/call",
-
-        {
-
-          method: "POST",
-
-          headers: {
-
-            "Content-Type":
-              "application/json"
-
-          }
-
-        }
-
-      );
-
-
-    const data =
-      await response.json();
-
-
-    if (!data.success) {
-
-      throw new Error(
-        data.message ||
-        "Could not call number"
-      );
-
-    }
-
-
-    currentGame =
-      data.game;
-
-
-    updateGameUI();
-
-  }
-
-  catch (error) {
-
-    alert(
-      "❌ " +
-      error.message
-    );
-
-  }
-
-}
-
-
-// ========================================
-// AUTO REFRESH GAME
-// ========================================
-
-setInterval(
-  async function() {
-
-    if (!currentGame) return;
-
-
-    try {
-
-      const response =
-        await fetch(
-
-          API +
-          "/api/game/" +
-          currentGame.id
-
-        );
-
-
-      const data =
-        await response.json();
-
-
-      if (data.success) {
-
-        currentGame =
-          data.game;
-
-
-        updateGameUI();
-
-      }
-
-    }
-
-    catch (error) {
-
-      console.log(
-        "Refresh error:",
-        error
-      );
-
-    }
-
-  },
-
-  3000
-
-);
-
-
-</script>
-
-</body>
-
-</html>
+          body:
+            JSON.stringify({
