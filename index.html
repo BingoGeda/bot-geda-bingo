@@ -160,6 +160,13 @@
       transform: scale(.98);
     }
 
+    button:disabled {
+
+      opacity: 0.6;
+
+      cursor: not-allowed;
+    }
+
     .secondary {
 
       background:
@@ -168,7 +175,7 @@
 
     .hidden {
 
-      display: none;
+      display: none !important;
     }
 
     .message {
@@ -177,9 +184,27 @@
 
       color: #ffe082;
 
-      min-height: 20px;
+      min-height: 25px;
 
       margin: 10px;
+    }
+
+    .game-id {
+
+      text-align: center;
+
+      background:
+        rgba(0,0,0,.20);
+
+      padding: 10px;
+
+      border-radius: 10px;
+
+      margin-bottom: 12px;
+
+      font-size: 12px;
+
+      word-break: break-all;
     }
 
     .bingo-title {
@@ -233,6 +258,13 @@
       font-weight: bold;
 
       cursor: pointer;
+
+      transition: .15s;
+    }
+
+    .number:active {
+
+      transform: scale(.94);
     }
 
     .number.marked {
@@ -240,6 +272,7 @@
       background: #ffb300;
 
       color: #35105e;
+
     }
 
     .free {
@@ -247,6 +280,7 @@
       background: #ffb300;
 
       color: #35105e;
+
     }
 
     .called-number {
@@ -314,6 +348,19 @@
       font-size: 24px;
 
       font-weight: 900;
+
+      margin-top: 16px;
+    }
+
+    .player-name {
+
+      text-align: center;
+
+      color: #ddd;
+
+      font-size: 14px;
+
+      margin-bottom: 12px;
     }
 
     .footer {
@@ -337,7 +384,9 @@
 <div class="container">
 
 
+  <!-- ========================= -->
   <!-- HEADER -->
+  <!-- ========================= -->
 
   <div class="header">
 
@@ -356,7 +405,9 @@
   </div>
 
 
+  <!-- ========================= -->
   <!-- HOME -->
+  <!-- ========================= -->
 
   <div id="home">
 
@@ -376,6 +427,7 @@
 
         </div>
 
+
         <div class="info">
 
           <strong id="status">
@@ -387,6 +439,7 @@
           </small>
 
         </div>
+
 
         <div class="info">
 
@@ -403,12 +456,24 @@
       </div>
 
 
-      <button onclick="createGame()">
+      <div
+        id="homeGameId"
+        class="game-id"
+      >
+        No active game
+      </div>
+
+
+      <button
+        id="createButton"
+        onclick="createGame()"
+      >
         🎱 CREATE GAME
       </button>
 
 
       <button
+        id="joinButton"
         class="secondary"
         onclick="joinCurrentGame()"
       >
@@ -420,16 +485,33 @@
   </div>
 
 
+  <!-- ========================= -->
   <!-- GAME -->
+  <!-- ========================= -->
 
-  <div id="game" class="hidden">
+  <div
+    id="game"
+    class="hidden"
+  >
 
     <div class="card">
+
+      <div class="player-name">
+
+        👤 Playing as:
+        <strong id="playerName">
+          Guest
+        </strong>
+
+      </div>
+
 
       <div class="bingo-title">
         🎟️ YOUR BINGO CARD
       </div>
 
+
+      <!-- BINGO LETTERS -->
 
       <div class="bingo-grid">
 
@@ -456,6 +538,8 @@
       </div>
 
 
+      <!-- BINGO NUMBERS -->
+
       <div
         id="bingoCard"
         class="bingo-grid"
@@ -478,7 +562,9 @@
     </div>
 
 
+    <!-- ========================= -->
     <!-- CALLED NUMBER -->
+    <!-- ========================= -->
 
     <div class="card">
 
@@ -508,7 +594,9 @@
     </div>
 
 
+    <!-- ========================= -->
     <!-- HOST -->
+    <!-- ========================= -->
 
     <div class="card">
 
@@ -518,6 +606,10 @@
 
     </div>
 
+
+    <!-- ========================= -->
+    <!-- WINNER -->
+    <!-- ========================= -->
 
     <div
       id="winner"
@@ -529,12 +621,786 @@
   </div>
 
 
+  <!-- ========================= -->
+  <!-- MESSAGE -->
+  <!-- ========================= -->
+
   <div
     id="message"
     class="message"
   ></div>
 
 
+  <!-- ========================= -->
+  <!-- FOOTER -->
+  <!-- ========================= -->
+
   <div class="footer">
 
     Bot Geda • Fast • Fun • Fair
+
+  </div>
+
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- JAVASCRIPT -->
+<!-- ===================================================== -->
+
+<script>
+
+let currentGame = null;
+
+let currentPlayer = null;
+
+let markedNumbers = new Set();
+
+
+// =====================================================
+// TELEGRAM
+// =====================================================
+
+const tg =
+  window.Telegram &&
+  window.Telegram.WebApp
+    ? window.Telegram.WebApp
+    : null;
+
+
+if (tg) {
+
+  tg.ready();
+
+  tg.expand();
+
+}
+
+
+// =====================================================
+// MESSAGE
+// =====================================================
+
+function showMessage(text) {
+
+  const message =
+    document.getElementById(
+      "message"
+    );
+
+  message.textContent = text;
+
+}
+
+
+// =====================================================
+// GET TELEGRAM USER
+// =====================================================
+
+function getTelegramUser() {
+
+  if (
+    tg &&
+    tg.initDataUnsafe &&
+    tg.initDataUnsafe.user
+  ) {
+
+    return tg.initDataUnsafe.user;
+
+  }
+
+
+  return {
+
+    id:
+      "guest-" +
+      Date.now(),
+
+    first_name:
+      "Guest",
+
+    username:
+      ""
+
+  };
+
+}
+
+
+// =====================================================
+// LOAD GAME
+// =====================================================
+
+async function loadGame() {
+
+  try {
+
+    const response =
+      await fetch(
+        "/api/game"
+      );
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        "Server returned " +
+        response.status
+      );
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    if (!data.success) {
+
+      showMessage(
+        "❌ Could not load game."
+      );
+
+      return;
+
+    }
+
+
+    currentGame =
+      data.game;
+
+
+    updateGameInfo();
+
+
+  } catch (error) {
+
+    console.error(
+      "LOAD GAME ERROR:",
+      error
+    );
+
+
+    showMessage(
+      "❌ Cannot connect to Bingo server."
+    );
+
+  }
+
+}
+
+
+// =====================================================
+// UPDATE GAME INFORMATION
+// =====================================================
+
+function updateGameInfo() {
+
+  if (!currentGame) {
+
+    return;
+
+  }
+
+
+  const players =
+    Object.keys(
+      currentGame.players || {}
+    ).length;
+
+
+  document.getElementById(
+    "players"
+  ).textContent =
+    players;
+
+
+  document.getElementById(
+    "status"
+  ).textContent =
+    (
+      currentGame.status ||
+      "waiting"
+    ).toUpperCase();
+
+
+  document.getElementById(
+    "called"
+  ).textContent =
+    (
+      currentGame.calledNumbers ||
+      []
+    ).length;
+
+
+  document.getElementById(
+    "homeGameId"
+  ).textContent =
+    "Game ID: " +
+    currentGame.id;
+
+}
+
+
+// =====================================================
+// CREATE GAME
+// =====================================================
+
+async function createGame() {
+
+  const button =
+    document.getElementById(
+      "createButton"
+    );
+
+
+  button.disabled = true;
+
+
+  showMessage(
+    "🎱 Creating Bingo game..."
+  );
+
+
+  try {
+
+    const response =
+      await fetch(
+        "/api/game/create",
+        {
+
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          }
+
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    console.log(
+      "CREATE GAME:",
+      data
+    );
+
+
+    if (!data.success) {
+
+      showMessage(
+        "❌ Failed to create game."
+      );
+
+      return;
+
+    }
+
+
+    currentGame =
+      data.game;
+
+
+    updateGameInfo();
+
+
+    showMessage(
+      "✅ Game created successfully! Now press JOIN GAME."
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "CREATE GAME ERROR:",
+      error
+    );
+
+
+    showMessage(
+      "❌ Server connection failed."
+    );
+
+
+  } finally {
+
+    button.disabled = false;
+
+  }
+
+}
+
+
+// =====================================================
+// JOIN CURRENT GAME
+// =====================================================
+
+async function joinCurrentGame() {
+
+  const button =
+    document.getElementById(
+      "joinButton"
+    );
+
+
+  button.disabled = true;
+
+
+  try {
+
+    showMessage(
+      "🎮 Joining Bingo game..."
+    );
+
+
+    // Make sure game exists
+
+    if (!currentGame) {
+
+      await loadGame();
+
+    }
+
+
+    if (!currentGame) {
+
+      showMessage(
+        "❌ No game available."
+      );
+
+      return;
+
+    }
+
+
+    const user =
+      getTelegramUser();
+
+
+    console.log(
+      "JOIN USER:",
+      user
+    );
+
+
+    const response =
+      await fetch(
+
+        `/api/game/${currentGame.id}/join`,
+
+        {
+
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+              user: user
+            })
+
+        }
+
+      );
+
+
+    const data =
+      await response.json();
+
+
+    console.log(
+      "JOIN GAME:",
+      data
+    );
+
+
+    if (!data.success) {
+
+      showMessage(
+        "❌ " +
+        (
+          data.message ||
+          "Could not join game."
+        )
+      );
+
+      return;
+
+    }
+
+
+    currentGame =
+      data.game;
+
+
+    currentPlayer =
+      data.player;
+
+
+    markedNumbers =
+      new Set();
+
+
+    updateGameInfo();
+
+
+    // Player name
+
+    document.getElementById(
+      "playerName"
+    ).textContent =
+      currentPlayer.name ||
+      "Guest";
+
+
+    // Render card
+
+    renderBingoCard(
+      currentPlayer.card
+    );
+
+
+    // Show game
+
+    document
+      .getElementById(
+        "home"
+      )
+      .classList.add(
+        "hidden"
+      );
+
+
+    document
+      .getElementById(
+        "game"
+      )
+      .classList.remove(
+        "hidden"
+      );
+
+
+    updateCalledNumbers();
+
+
+    showMessage(
+      "✅ You joined Bingo Geda!"
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "JOIN GAME ERROR:",
+      error
+    );
+
+
+    showMessage(
+      "❌ Could not join game."
+    );
+
+
+  } finally {
+
+    button.disabled = false;
+
+  }
+
+}
+
+
+// =====================================================
+// RENDER BINGO CARD
+// =====================================================
+
+function renderBingoCard(card) {
+
+  const container =
+    document.getElementById(
+      "bingoCard"
+    );
+
+
+  container.innerHTML = "";
+
+
+  if (!card) {
+
+    return;
+
+  }
+
+
+  card.forEach(
+    (number, index) => {
+
+      const cell =
+        document.createElement(
+          "div"
+        );
+
+
+      cell.className =
+        "number";
+
+
+      cell.textContent =
+        number;
+
+
+      // FREE CENTER
+
+      if (
+        number === "FREE"
+      ) {
+
+        cell.classList.add(
+          "free"
+        );
+
+        cell.classList.add(
+          "marked"
+        );
+
+        markedNumbers.add(
+          "FREE"
+        );
+
+      }
+
+
+      // Click number
+
+      cell.addEventListener(
+        "click",
+        function () {
+
+          if (
+            number === "FREE"
+          ) {
+
+            return;
+
+          }
+
+
+          // Only mark if number
+          // has already been called
+
+          const called =
+            currentGame &&
+            currentGame.calledNumbers
+              ? currentGame.calledNumbers.includes(
+                  number
+                )
+              : false;
+
+
+          if (!called) {
+
+            showMessage(
+              "⚠️ Number " +
+              number +
+              " has not been called yet."
+            );
+
+            return;
+
+          }
+
+
+          cell.classList.toggle(
+            "marked"
+          );
+
+
+          if (
+            cell.classList.contains(
+              "marked"
+            )
+          ) {
+
+            markedNumbers.add(
+              number
+            );
+
+          } else {
+
+            markedNumbers.delete(
+              number
+            );
+
+          }
+
+        }
+      );
+
+
+      container.appendChild(
+        cell
+      );
+
+    }
+  );
+
+}
+
+
+// =====================================================
+// CALL NEXT NUMBER
+// =====================================================
+
+async function callNumber() {
+
+  if (!currentGame) {
+
+    showMessage(
+      "❌ No active game."
+    );
+
+    return;
+
+  }
+
+
+  try {
+
+    showMessage(
+      "📢 Calling next number..."
+    );
+
+
+    const response =
+      await fetch(
+
+        `/api/game/${currentGame.id}/call`,
+
+        {
+
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          }
+
+        }
+
+      );
+
+
+    const data =
+      await response.json();
+
+
+    console.log(
+      "CALL NUMBER:",
+      data
+    );
+
+
+    if (!data.success) {
+
+      showMessage(
+        "❌ " +
+        (
+          data.message ||
+          "Could not call number."
+        )
+      );
+
+      return;
+
+    }
+
+
+    currentGame =
+      data.game;
+
+
+    document.getElementById(
+      "lastNumber"
+    ).textContent =
+      data.number;
+
+
+    updateGameInfo();
+
+
+    updateCalledNumbers();
+
+
+    // Automatically mark
+    // the called number
+
+    markCalledNumber(
+      data.number
+    );
+
+
+    showMessage(
+      "📢 Number " +
+      data.number +
+      " called!"
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "CALL NUMBER ERROR:",
+      error
+    );
+
+
+    showMessage(
+      "❌ Failed to call number."
+    );
+
+  }
+
+}
+
+
+// =====================================================
+// MARK CALLED NUMBER
+// =====================================================
+
+function markCalledNumber(
+  number
+) {
+
+  const cells =
+    document.querySelectorAll(
+      "#bingoCard .number"
+    );
+
+
+  cells.forEach(
+    cell => {
+
+      if (
+        Number(
+          cell.textContent
+        ) ===
+        Number(number)
+      ) {
+
+        cell.classList.add(
+          "marked"
+        );
+
+        markedNumbers.add(
+          number
+        );
+
+      }
