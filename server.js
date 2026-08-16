@@ -1,5 +1,8 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
+const http = require("http");
+const { WebSocketServer } = require("ws");
 const { Pool } = require("pg");
 
 const app = express();
@@ -9,637 +12,1010 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 10000;
 
-// ======================================
-// POSTGRESQL
-// ======================================
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
-
-async function initDatabase() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS games (
-      id TEXT PRIMARY KEY,
-      called_numbers INTEGER[] NOT NULL DEFAULT '{}',
-      status TEXT NOT NULL DEFAULT 'waiting',
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-
-    CREATE TABLE IF NOT EXISTS players (
-      id TEXT NOT NULL,
-      game_id TEXT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
-      name TEXT NOT NULL,
-      joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      PRIMARY KEY (id, game_id)
-    );
-  `);
-
-  console.log("✅ PostgreSQL database initialized");
-}
-
-// ======================================
-// STATIC MINI APP
-// ======================================
-
 app.use(express.static(__dirname));
 
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/index.html");
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// ======================================
-// HELPERS
-// ======================================
+/* =====================================================
+   DATABASE
+===================================================== */
 
-async function createNewGame() {
-  const id = Date.now().toString();
+let pool = null;
+let databaseConnected = false;
 
-  await pool.query(
-    `
-    INSERT INTO games
-      (id, called_numbers, status)
-    VALUES
-      ($1, '{}', 'waiting')
-    `,
-    [id]
-  );
+if (process.env.DATABASE_URL) {
 
-  return getGame(id);
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false
+    }
+  });
+
+  pool.connect()
+    .then(client => {
+
+      databaseConnected = true;
+
+      console.log("✅ PostgreSQL connected");
+
+      client.release();
+
+    })
+    .catch(error => {
+
+      databaseConnected = false;
+
+      console.error(
+        "❌ PostgreSQL connection failed:",
+        error.message
+      );
+
+    });
 }
 
-async function getGame(gameId) {
-  const gameResult = await pool.query(
-    `
-    SELECT
-      id,
-      called_numbers,
-      status,
-      created_at
-    FROM games
-    WHERE id = $1
-    `,
-    [gameId]
-  );
+/* =====================================================
+   GAME
+===================================================== */
 
-  if (gameResult.rows.length === 0) {
-    return null;
-  }
+let game = createNewGame();
 
-  const row = gameResult.rows[0];
+let autoCallTimer = null;
 
-  const playersResult = await pool.query(
-    `
-    SELECT
-      id,
-      name,
-      joined_at
-    FROM players
-    WHERE game_id = $1
-    ORDER BY joined_at ASC
-    `,
-    [gameId]
-  );
+const AUTO_CALL_SECONDS = 5;
 
-  const players = {};
-
-  playersResult.rows.forEach(player => {
-    players[player.id] = {
-      id: player.id,
-      name: player.name,
-      joinedAt: player.joined_at
-    };
-  });
+function createNewGame(controllerId, controllerName) {
 
   return {
-    id: row.id,
-    calledNumbers: row.called_numbers || [],
-    status: row.status,
-    players,
-    createdAt: row.created_at
+
+    id: Date.now().toString(),
+
+    status: "waiting",
+
+    controllerId:
+      controllerId || null,
+
+    controllerName:
+      controllerName || "Controller",
+
+    players: {},
+
+    calledNumbers: [],
+
+    createdAt:
+      new Date().toISOString(),
+
+    autoCall: false
+
   };
+
 }
 
-// ======================================
-// HEALTH
-// ======================================
+/* =====================================================
+   WEBSOCKET
+===================================================== */
 
-app.get("/api/health", async (req, res) => {
-  try {
-    await pool.query("SELECT 1");
+const server = http.createServer(app);
 
-    res.json({
-      success: true,
-      status: "OK",
-      server: "Bingo Geda",
-      database: "connected",
-      time: new Date().toISOString()
-    });
-
-  } catch (error) {
-
-    console.error("DATABASE ERROR:", error);
-
-    res.status(500).json({
-      success: false,
-      status: "ERROR",
-      server: "Bingo Geda",
-      database: "disconnected"
-    });
-  }
+const wss = new WebSocketServer({
+  server
 });
 
-// ======================================
-// CURRENT GAME
-// ======================================
+function broadcast(data) {
 
-app.get("/api/game", async (req, res) => {
+  const message =
+    JSON.stringify(data);
 
-  try {
+  wss.clients.forEach(client => {
 
-    const result = await pool.query(`
-      SELECT id
-      FROM games
-      ORDER BY created_at DESC
-      LIMIT 1
-    `);
+    if (client.readyState === 1) {
 
-    if (result.rows.length === 0) {
+      client.send(message);
 
-      const newGame = await createNewGame();
-
-      return res.json({
-        success: true,
-        game: newGame
-      });
     }
 
-    const game = await getGame(result.rows[0].id);
+  });
 
-    res.json({
-      success: true,
-      game
-    });
+}
 
-  } catch (error) {
+wss.on("connection", ws => {
 
-    console.error(error);
+  console.log(
+    "🔌 WebSocket player connected"
+  );
 
-    res.status(500).json({
-      success: false,
-      message: "Could not load game."
-    });
-  }
-});
+  ws.send(JSON.stringify({
 
-// ======================================
-// CREATE NEW GAME
-// ======================================
+    type: "GAME_STATE",
 
-app.post("/api/game/new", async (req, res) => {
+    game
 
-  try {
+  }));
 
-    const game = await createNewGame();
-
-    console.log("🎱 New game:", game.id);
-
-    res.json({
-      success: true,
-      message: "New Bingo game created!",
-      game
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: "Could not create game."
-    });
-  }
-});
-
-// ======================================
-// JOIN GAME
-// ======================================
-
-app.post("/api/game/join", async (req, res) => {
-
-  try {
-
-    const gameId = String(req.body.gameId || "");
-
-    const playerId = String(
-      req.body.playerId ||
-      "player_" + Date.now()
-    );
-
-    const playerName =
-      String(req.body.name || "Player");
-
-    if (!gameId) {
-
-      return res.status(400).json({
-        success: false,
-        message: "Game ID is required."
-      });
-    }
-
-    const game = await getGame(gameId);
-
-    if (!game) {
-
-      return res.status(404).json({
-        success: false,
-        message: "Game not found.",
-        gameId
-      });
-    }
-
-    await pool.query(
-      `
-      INSERT INTO players
-        (id, game_id, name)
-      VALUES
-        ($1, $2, $3)
-      ON CONFLICT (id, game_id)
-      DO UPDATE SET name = EXCLUDED.name
-      `,
-      [playerId, gameId, playerName]
-    );
-
-    await pool.query(
-      `
-      UPDATE games
-      SET status = 'playing'
-      WHERE id = $1
-      `,
-      [gameId]
-    );
-
-    const updatedGame = await getGame(gameId);
+  ws.on("close", () => {
 
     console.log(
-      `👤 ${playerName} joined ${gameId}`
+      "🔌 WebSocket disconnected"
     );
 
-    res.json({
-      success: true,
-      message: "Player joined Bingo Geda!",
-      game: updatedGame
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: "Could not join game."
-    });
-  }
-});
-
-// ======================================
-// CALL NUMBER
-// ======================================
-
-app.post("/api/game/call", async (req, res) => {
-
-  try {
-
-    const gameId = String(req.body.gameId || "");
-
-    if (!gameId) {
-
-      return res.status(400).json({
-        success: false,
-        message: "Game ID is required."
-      });
-    }
-
-    const game = await getGame(gameId);
-
-    if (!game) {
-
-      return res.status(404).json({
-        success: false,
-        message: "Game not found."
-      });
-    }
-
-    if (game.status === "finished") {
-
-      return res.status(400).json({
-        success: false,
-        message: "Game is already finished.",
-        game
-      });
-    }
-
-    const allNumbers =
-      Array.from(
-        { length: 75 },
-        (_, i) => i + 1
-      );
-
-    const available =
-      allNumbers.filter(
-        number =>
-          !game.calledNumbers.includes(number)
-      );
-
-    if (available.length === 0) {
-
-      await pool.query(
-        `
-        UPDATE games
-        SET status = 'finished'
-        WHERE id = $1
-        `,
-        [gameId]
-      );
-
-      return res.json({
-        success: false,
-        message: "All Bingo numbers have been called."
-      });
-    }
-
-    const number =
-      available[
-        Math.floor(
-          Math.random() * available.length
-        )
-      ];
-
-    const newNumbers = [
-      ...game.calledNumbers,
-      number
-    ];
-
-    await pool.query(
-      `
-      UPDATE games
-      SET
-        called_numbers = $1,
-        status = 'playing'
-      WHERE id = $2
-      `,
-      [newNumbers, gameId]
-    );
-
-    const updatedGame =
-      await getGame(gameId);
-
-    console.log(
-      `🔢 ${number} called in ${gameId}`
-    );
-
-    res.json({
-      success: true,
-      number,
-      calledNumbers: newNumbers,
-      game: updatedGame
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: "Could not call number."
-    });
-  }
-});
-
-// ======================================
-// CALLED NUMBERS
-// ======================================
-
-app.get("/api/game/numbers", async (req, res) => {
-
-  try {
-
-    const result = await pool.query(`
-      SELECT called_numbers
-      FROM games
-      ORDER BY created_at DESC
-      LIMIT 1
-    `);
-
-    const numbers =
-      result.rows[0]?.called_numbers || [];
-
-    res.json({
-      success: true,
-      calledNumbers: numbers
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: "Could not load numbers."
-    });
-  }
-});
-
-// ======================================
-// LEAVE GAME
-// ======================================
-
-app.post("/api/game/leave", async (req, res) => {
-
-  try {
-
-    const playerId =
-      String(req.body.playerId || "");
-
-    const gameId =
-      String(req.body.gameId || "");
-
-    if (playerId && gameId) {
-
-      await pool.query(
-        `
-        DELETE FROM players
-        WHERE id = $1
-        AND game_id = $2
-        `,
-        [playerId, gameId]
-      );
-    }
-
-    const game = await getGame(gameId);
-
-    if (game && Object.keys(game.players).length === 0) {
-
-      await pool.query(
-        `
-        UPDATE games
-        SET status = 'waiting'
-        WHERE id = $1
-        `,
-        [gameId]
-      );
-    }
-
-    res.json({
-      success: true,
-      message: "Player left the game.",
-      game
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: "Could not leave game."
-    });
-  }
-});
-
-// ======================================
-// GAME STATUS
-// ======================================
-
-app.get("/api/game/status", async (req, res) => {
-
-  try {
-
-    const result = await pool.query(`
-      SELECT
-        id,
-        status,
-        called_numbers
-      FROM games
-      ORDER BY created_at DESC
-      LIMIT 1
-    `);
-
-    if (result.rows.length === 0) {
-
-      return res.json({
-        success: true,
-        status: "waiting",
-        players: 0,
-        calledNumbers: 0,
-        gameId: null
-      });
-    }
-
-    const row = result.rows[0];
-
-    const players =
-      await pool.query(
-        `
-        SELECT COUNT(*)
-        FROM players
-        WHERE game_id = $1
-        `,
-        [row.id]
-      );
-
-    res.json({
-      success: true,
-      status: row.status,
-      players: Number(players.rows[0].count),
-      calledNumbers:
-        (row.called_numbers || []).length,
-      gameId: row.id
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: "Could not load status."
-    });
-  }
-});
-
-// ======================================
-// RESET
-// ======================================
-
-app.post("/api/game/reset", async (req, res) => {
-
-  try {
-
-    await pool.query("DELETE FROM games");
-
-    const game = await createNewGame();
-
-    res.json({
-      success: true,
-      message: "Game reset.",
-      game
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: "Could not reset game."
-    });
-  }
-});
-
-// ======================================
-// 404
-// ======================================
-
-app.use("/api", (req, res) => {
-
-  res.status(404).json({
-    success: false,
-    message: "API endpoint not found."
   });
 
 });
 
-// ======================================
-// START SERVER
-// ======================================
+/* =====================================================
+   BINGO LETTER
+===================================================== */
 
-async function startServer() {
+function getBingoLetter(number) {
+
+  if (number >= 1 && number <= 15)
+    return "B";
+
+  if (number >= 16 && number <= 30)
+    return "I";
+
+  if (number >= 31 && number <= 45)
+    return "N";
+
+  if (number >= 46 && number <= 60)
+    return "G";
+
+  return "O";
+
+}
+
+/* =====================================================
+   DATABASE SAVE
+===================================================== */
+
+async function saveGame() {
+
+  if (!pool) {
+    return;
+  }
 
   try {
 
-    await initDatabase();
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS bingo_games (
+        id TEXT PRIMARY KEY,
+        controller_id TEXT,
+        controller_name TEXT,
+        status TEXT,
+        called_numbers JSONB,
+        players JSONB,
+        auto_call BOOLEAN,
+        created_at TIMESTAMP
+      )
+    `);
 
-    app.listen(PORT, () => {
+    await pool.query(`
+      INSERT INTO bingo_games
+      (
+        id,
+        controller_id,
+        controller_name,
+        status,
+        called_numbers,
+        players,
+        auto_call,
+        created_at
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+      ON CONFLICT (id)
+      DO UPDATE SET
+        controller_id = EXCLUDED.controller_id,
+        controller_name = EXCLUDED.controller_name,
+        status = EXCLUDED.status,
+        called_numbers = EXCLUDED.called_numbers,
+        players = EXCLUDED.players,
+        auto_call = EXCLUDED.auto_call
+    `, [
 
-      console.log(
-        `🎱 Bingo Geda server running on port ${PORT}`
-      );
+      game.id,
 
-    });
+      game.controllerId,
+
+      game.controllerName,
+
+      game.status,
+
+      JSON.stringify(
+        game.calledNumbers
+      ),
+
+      JSON.stringify(
+        game.players
+      ),
+
+      game.autoCall,
+
+      game.createdAt
+
+    ]);
 
   } catch (error) {
 
     console.error(
-      "❌ DATABASE STARTUP ERROR:",
-      error
+      "DATABASE SAVE ERROR:",
+      error.message
     );
 
-    process.exit(1);
   }
+
 }
 
-startServer();
+/* =====================================================
+   HEALTH
+===================================================== */
+
+app.get("/api/health", async (req, res) => {
+
+  res.json({
+
+    success: true,
+
+    status: "OK",
+
+    server: "Bingo Geda",
+
+    database:
+      databaseConnected
+        ? "connected"
+        : "not connected",
+
+    time:
+      new Date().toISOString()
+
+  });
+
+});
+
+/* =====================================================
+   GET GAME
+===================================================== */
+
+app.get("/api/game", (req, res) => {
+
+  res.json({
+
+    success: true,
+
+    game
+
+  });
+
+});
+
+/* =====================================================
+   CREATE GAME
+===================================================== */
+
+app.post("/api/game/new", async (req, res) => {
+
+  const controllerId =
+    String(
+      req.body.controllerId ||
+      ""
+    );
+
+  const controllerName =
+    String(
+      req.body.controllerName ||
+      "Controller"
+    );
+
+  if (!controllerId) {
+
+    return res.status(400).json({
+
+      success: false,
+
+      message:
+        "Controller ID is required."
+
+    });
+
+  }
+
+  /* New game */
+
+  stopAutoCall();
+
+  game =
+    createNewGame(
+      controllerId,
+      controllerName
+    );
+
+  game.players[controllerId] = {
+
+    id: controllerId,
+
+    name: controllerName,
+
+    role: "controller",
+
+    joinedAt:
+      new Date().toISOString()
+
+  };
+
+  await saveGame();
+
+  broadcast({
+
+    type: "GAME_CREATED",
+
+    game
+
+  });
+
+  console.log(
+    "🎱 Game created:",
+    game.id,
+    "Controller:",
+    controllerName
+  );
+
+  res.json({
+
+    success: true,
+
+    message:
+      "Bingo game created.",
+
+    game
+
+  });
+
+});
+
+/* =====================================================
+   JOIN GAME
+===================================================== */
+
+app.post("/api/game/join", async (req, res) => {
+
+  const gameId =
+    String(
+      req.body.gameId ||
+      ""
+    );
+
+  const playerId =
+    String(
+      req.body.playerId ||
+      ""
+    );
+
+  const playerName =
+    String(
+      req.body.name ||
+      "Player"
+    );
+
+  if (!gameId) {
+
+    return res.status(400).json({
+
+      success: false,
+
+      message:
+        "Game ID is required."
+
+    });
+
+  }
+
+  if (gameId !== game.id) {
+
+    return res.status(404).json({
+
+      success: false,
+
+      message:
+        "Game not found."
+
+    });
+
+  }
+
+  if (!playerId) {
+
+    return res.status(400).json({
+
+      success: false,
+
+      message:
+        "Player ID is required."
+
+    });
+
+  }
+
+  /* Controller already exists */
+
+  if (
+    playerId === game.controllerId
+  ) {
+
+    return res.json({
+
+      success: true,
+
+      message:
+        "You are the controller.",
+
+      role: "controller",
+
+      player:
+        game.players[playerId],
+
+      game
+
+    });
+
+  }
+
+  /* Add player */
+
+  game.players[playerId] = {
+
+    id: playerId,
+
+    name: playerName,
+
+    role: "player",
+
+    joinedAt:
+      new Date().toISOString()
+
+  };
+
+  game.status = "playing";
+
+  await saveGame();
+
+  broadcast({
+
+    type: "PLAYER_JOINED",
+
+    player:
+      game.players[playerId],
+
+    game
+
+  });
+
+  console.log(
+    `👤 ${playerName} joined ${game.id}`
+  );
+
+  res.json({
+
+    success: true,
+
+    message:
+      "Player joined Bingo Geda.",
+
+    role: "player",
+
+    player:
+      game.players[playerId],
+
+    game
+
+  });
+
+});
+
+/* =====================================================
+   CALL NUMBER
+===================================================== */
+
+async function callNumber() {
+
+  if (
+    game.status === "finished"
+  ) {
+
+    return {
+
+      success: false,
+
+      message:
+        "Game is finished."
+
+    };
+
+  }
+
+  const allNumbers =
+    Array.from(
+      { length: 75 },
+      (_, i) => i + 1
+    );
+
+  const available =
+    allNumbers.filter(
+      number =>
+        !game.calledNumbers.includes(
+          number
+        )
+    );
+
+  if (
+    available.length === 0
+  ) {
+
+    game.status = "finished";
+
+    stopAutoCall();
+
+    await saveGame();
+
+    broadcast({
+
+      type: "GAME_FINISHED",
+
+      game
+
+    });
+
+    return {
+
+      success: false,
+
+      message:
+        "All numbers have been called.",
+
+      game
+
+    };
+
+  }
+
+  const randomIndex =
+    Math.floor(
+      Math.random() *
+      available.length
+    );
+
+  const number =
+    available[randomIndex];
+
+  game.calledNumbers.push(number);
+
+  game.status = "playing";
+
+  await saveGame();
+
+  const event = {
+
+    type: "NUMBER_CALLED",
+
+    number,
+
+    letter:
+      getBingoLetter(number),
+
+    calledNumbers:
+      game.calledNumbers,
+
+    game
+
+  };
+
+  broadcast(event);
+
+  console.log(
+    `🔢 ${getBingoLetter(number)} ${number}`
+  );
+
+  return {
+
+    success: true,
+
+    number,
+
+    letter:
+      getBingoLetter(number),
+
+    game
+
+  };
+
+}
+
+/* =====================================================
+   MANUAL CALL
+===================================================== */
+
+app.post("/api/game/call", async (req, res) => {
+
+  const controllerId =
+    String(
+      req.body.controllerId ||
+      ""
+    );
+
+  if (
+    controllerId !==
+    game.controllerId
+  ) {
+
+    return res.status(403).json({
+
+      success: false,
+
+      message:
+        "Only the controller can call numbers."
+
+    });
+
+  }
+
+  const result =
+    await callNumber();
+
+  res.json(result);
+
+});
+
+/* =====================================================
+   AUTO CALL START
+===================================================== */
+
+function startAutoCall() {
+
+  stopAutoCall();
+
+  game.autoCall = true;
+
+  autoCallTimer =
+    setInterval(async () => {
+
+      if (
+        game.autoCall &&
+        game.status !== "finished"
+      ) {
+
+        await callNumber();
+
+      }
+
+    }, AUTO_CALL_SECONDS * 1000);
+
+  console.log(
+    "▶️ Auto Call started"
+  );
+
+}
+
+/* =====================================================
+   AUTO CALL STOP
+===================================================== */
+
+function stopAutoCall() {
+
+  if (autoCallTimer) {
+
+    clearInterval(
+      autoCallTimer
+    );
+
+    autoCallTimer = null;
+
+  }
+
+  game.autoCall = false;
+
+  console.log(
+    "⏹ Auto Call stopped"
+  );
+
+}
+
+/* =====================================================
+   AUTO CALL API
+===================================================== */
+
+app.post(
+  "/api/game/auto-call",
+  async (req, res) => {
+
+    const controllerId =
+      String(
+        req.body.controllerId ||
+        ""
+      );
+
+    if (
+      controllerId !==
+      game.controllerId
+    ) {
+
+      return res.status(403).json({
+
+        success: false,
+
+        message:
+          "Only the controller can control Auto Call."
+
+      });
+
+    }
+
+    const enabled =
+      Boolean(
+        req.body.enabled
+      );
+
+    if (enabled) {
+
+      startAutoCall();
+
+    } else {
+
+      stopAutoCall();
+
+    }
+
+    await saveGame();
+
+    broadcast({
+
+      type: "AUTO_CALL_CHANGED",
+
+      enabled,
+
+      game
+
+    });
+
+    res.json({
+
+      success: true,
+
+      enabled,
+
+      game
+
+    });
+
+  }
+);
+
+/* =====================================================
+   GAME STATUS
+===================================================== */
+
+app.get(
+  "/api/game/status",
+  (req, res) => {
+
+    res.json({
+
+      success: true,
+
+      gameId:
+        game.id,
+
+      status:
+        game.status,
+
+      controller:
+        game.controllerName,
+
+      players:
+        Object.keys(
+          game.players
+        ).length,
+
+      calledNumbers:
+        game.calledNumbers.length,
+
+      autoCall:
+        game.autoCall
+
+    });
+
+  }
+);
+
+/* =====================================================
+   LEAVE
+===================================================== */
+
+app.post(
+  "/api/game/leave",
+  async (req, res) => {
+
+    const playerId =
+      String(
+        req.body.playerId ||
+        ""
+      );
+
+    if (
+      playerId ===
+      game.controllerId
+    ) {
+
+      return res.status(403).json({
+
+        success: false,
+
+        message:
+          "Controller cannot leave the game. End the game instead."
+
+      });
+
+    }
+
+    if (
+      game.players[playerId]
+    ) {
+
+      delete game.players[
+        playerId
+      ];
+
+    }
+
+    if (
+      Object.keys(
+        game.players
+      ).length <= 1
+    ) {
+
+      game.status = "waiting";
+
+    }
+
+    await saveGame();
+
+    broadcast({
+
+      type: "PLAYER_LEFT",
+
+      playerId,
+
+      game
+
+    });
+
+    res.json({
+
+      success: true,
+
+      game
+
+    });
+
+  }
+);
+
+/* =====================================================
+   RESET GAME
+===================================================== */
+
+app.post(
+  "/api/game/reset",
+  async (req, res) => {
+
+    const controllerId =
+      String(
+        req.body.controllerId ||
+        ""
+      );
+
+    if (
+      controllerId !==
+      game.controllerId
+    ) {
+
+      return res.status(403).json({
+
+        success: false,
+
+        message:
+          "Only the controller can reset the game."
+
+      });
+
+    }
+
+    stopAutoCall();
+
+    game =
+      createNewGame(
+        controllerId,
+        game.controllerName
+      );
+
+    game.players[
+      controllerId
+    ] = {
+
+      id:
+        controllerId,
+
+      name:
+        game.controllerName,
+
+      role:
+        "controller",
+
+      joinedAt:
+        new Date().toISOString()
+
+    };
+
+    await saveGame();
+
+    broadcast({
+
+      type:
+        "GAME_RESET",
+
+      game
+
+    });
+
+    res.json({
+
+      success: true,
+
+      game
+
+    });
+
+  }
+);
+
+/* =====================================================
+   404
+===================================================== */
+
+app.use(
+  "/api",
+  (req, res) => {
+
+    res.status(404).json({
+
+      success: false,
+
+      message:
+        "API endpoint not found."
+
+    });
+
+  }
+);
+
+/* =====================================================
+   SERVER
+===================================================== */
+
+server.listen(
+  PORT,
+  () => {
+
+    console.log(
+      `🎱 Bingo Geda Server running on port ${PORT}`
+    );
+
+    console.log(
+      `🌐 Port: ${PORT}`
+    );
+
+    console.log(
+      `🔌 WebSocket enabled`
+    );
+
+  }
+);
