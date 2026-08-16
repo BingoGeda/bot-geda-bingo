@@ -7,7 +7,7 @@
 
 <meta
   name="viewport"
-  content="width=device-width, initial-scale=1.0"
+  content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
 >
 
 <title>Bingo Geda</title>
@@ -23,12 +23,13 @@
 body {
 
   margin: 0;
-
   padding: 18px;
 
   min-height: 100vh;
 
-  font-family: Arial, sans-serif;
+  font-family:
+    Arial,
+    sans-serif;
 
   background:
     linear-gradient(
@@ -73,7 +74,8 @@ h1 {
 
   color: #ddd;
 
-  margin: 5px 0 25px;
+  margin:
+    5px 0 25px;
 
 }
 
@@ -129,11 +131,23 @@ button {
       #ff6f00
     );
 
+  cursor: pointer;
+
+}
+
+button:active {
+
+  transform:
+    scale(0.98);
+
 }
 
 button:disabled {
 
   opacity: 0.5;
+
+  cursor:
+    not-allowed;
 
 }
 
@@ -145,6 +159,17 @@ button:disabled {
       255,
       255,
       0.15
+    );
+
+}
+
+.danger {
+
+  background:
+    linear-gradient(
+      90deg,
+      #e53935,
+      #b71c1c
     );
 
 }
@@ -165,175 +190,14 @@ input {
 
   margin-top: 8px;
 
-}
-
-#gameScreen {
-
-  display: none;
+  text-align: center;
 
 }
 
+#gameScreen,
 #controllerScreen {
 
   display: none;
-
-}
-
-.bingo-grid {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(
-      5,
-      1fr
-    );
-
-  gap: 5px;
-
-}
-
-.bingo-letter {
-
-  background: #ffb300;
-
-  color: #35105e;
-
-  font-weight: bold;
-
-  text-align: center;
-
-  padding: 10px 0;
-
-  border-radius: 7px;
-
-  font-size: 18px;
-
-}
-
-.bingo-number {
-
-  background: white;
-
-  color: #251039;
-
-  text-align: center;
-
-  padding: 13px 0;
-
-  border-radius: 7px;
-
-  font-weight: bold;
-
-  font-size: 16px;
-
-}
-
-.bingo-number.marked {
-
-  background: #ffb300;
-
-  color: #35105e;
-
-}
-
-.bingo-free {
-
-  background: #ffb300;
-
-  color: #35105e;
-
-}
-
-.last-number {
-
-  text-align: center;
-
-  background:
-    rgba(
-      255,
-      255,
-      255,
-      0.12
-    );
-
-  padding: 18px;
-
-  border-radius: 18px;
-
-  margin: 15px 0;
-
-}
-
-.last-number small {
-
-  display: block;
-
-  color: #ccc;
-
-  margin-bottom: 5px;
-
-}
-
-.last-number strong {
-
-  font-size: 55px;
-
-}
-
-.called {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(
-      10,
-      1fr
-    );
-
-  gap: 5px;
-
-}
-
-.called span {
-
-  background:
-    rgba(
-      255,
-      255,
-      255,
-      0.15
-    );
-
-  padding: 7px 2px;
-
-  border-radius: 5px;
-
-  text-align: center;
-
-  font-size: 12px;
-
-}
-
-.called span.active {
-
-  background: #ffb300;
-
-  color: #35105e;
-
-  font-weight: bold;
-
-}
-
-#message {
-
-  text-align: center;
-
-  min-height: 25px;
-
-  color: #ffd54f;
-
-  font-weight: bold;
 
 }
 
@@ -355,27 +219,371 @@ input {
 
   margin-bottom: 15px;
 
+  font-weight: bold;
+
 }
+
+/* =====================================================
+   BINGO CARD
+===================================================== */
+
+.bingo-grid {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      5,
+      1fr
+    );
+
+  gap: 5px;
+
+}
+
+.bingo-letter {
+
+  background:
+    #ffb300;
+
+  color:
+    #35105e;
+
+  font-weight:
+    bold;
+
+  text-align:
+    center;
+
+  padding:
+    10px 0;
+
+  border-radius:
+    7px;
+
+  font-size:
+    18px;
+
+}
+
+.bingo-number {
+
+  background:
+    white;
+
+  color:
+    #251039;
+
+  text-align:
+    center;
+
+  padding:
+    14px 0;
+
+  border-radius:
+    7px;
+
+  font-weight:
+    bold;
+
+  font-size:
+    16px;
+
+  user-select:
+    none;
+
+}
+
+.bingo-number.marked {
+
+  background:
+    #ffb300;
+
+  color:
+    #35105e;
+
+  box-shadow:
+    0 0 0 2px
+    #fff;
+
+}
+
+.bingo-free {
+
+  background:
+    #ffb300;
+
+  color:
+    #35105e;
+
+}
+
+/* =====================================================
+   LAST NUMBER
+===================================================== */
+
+.last-number {
+
+  text-align:
+    center;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.12
+    );
+
+  padding:
+    18px;
+
+  border-radius:
+    18px;
+
+  margin:
+    15px 0;
+
+}
+
+.last-number small {
+
+  display:
+    block;
+
+  color:
+    #ccc;
+
+  margin-bottom:
+    5px;
+
+}
+
+.last-number strong {
+
+  font-size:
+    55px;
+
+}
+
+/* =====================================================
+   CONTROLLER NUMBER
+===================================================== */
 
 .controller-number {
 
-  text-align: center;
+  text-align:
+    center;
 
-  font-size: 80px;
+  font-size:
+    90px;
 
-  font-weight: bold;
+  font-weight:
+    bold;
 
-  margin: 15px 0;
+  margin:
+    10px 0;
+
+  color:
+    #ffb300;
 
 }
 
+/* =====================================================
+   CALLED NUMBERS
+===================================================== */
+
+.called {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(
+      10,
+      1fr
+    );
+
+  gap:
+    5px;
+
+}
+
+.called span {
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.15
+    );
+
+  padding:
+    7px 2px;
+
+  border-radius:
+    5px;
+
+  text-align:
+    center;
+
+  font-size:
+    12px;
+
+}
+
+.called span.active {
+
+  background:
+    #ffb300;
+
+  color:
+    #35105e;
+
+  font-weight:
+    bold;
+
+}
+
+/* =====================================================
+   MESSAGE
+===================================================== */
+
+#message {
+
+  text-align:
+    center;
+
+  min-height:
+    25px;
+
+  color:
+    #ffd54f;
+
+  font-weight:
+    bold;
+
+  margin:
+    10px 0;
+
+}
+
+/* =====================================================
+   AUTO STATUS
+===================================================== */
+
 .auto-status {
 
-  text-align: center;
+  text-align:
+    center;
 
-  margin: 10px;
+  margin:
+    10px;
 
-  color: #ffd54f;
+  color:
+    #ffd54f;
+
+}
+
+/* =====================================================
+   GAME ID
+===================================================== */
+
+.game-id {
+
+  background:
+    rgba(
+      0,
+      0,
+      0,
+      0.15
+    );
+
+  padding:
+    12px;
+
+  border-radius:
+    10px;
+
+  text-align:
+    center;
+
+  word-break:
+    break-all;
+
+}
+
+/* =====================================================
+   PLAYER LIST
+===================================================== */
+
+.player-item {
+
+  padding:
+    10px;
+
+  margin:
+    5px 0;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.08
+    );
+
+  border-radius:
+    10px;
+
+}
+
+/* =====================================================
+   CONNECTION
+===================================================== */
+
+.connection {
+
+  text-align:
+    center;
+
+  font-size:
+    12px;
+
+  color:
+    #bbb;
+
+  margin:
+    8px;
+
+}
+
+.connected {
+
+  color:
+    #69f0ae;
+
+}
+
+.disconnected {
+
+  color:
+    #ff8a80;
+
+}
+
+/* =====================================================
+   HOME INFO
+===================================================== */
+
+.info {
+
+  line-height:
+    1.6;
+
+  color:
+    #eee;
 
 }
 
@@ -387,26 +595,59 @@ input {
 
 <div class="container">
 
-<div class="logo">🎱</div>
+<div class="logo">
+🎱
+</div>
 
-<h1>BINGO GEDA</h1>
+<h1>
+BINGO GEDA
+</h1>
 
 <div class="subtitle">
 Multiplayer Bingo on Telegram
 </div>
 
-<!-- HOME -->
+<div
+  id="connectionStatus"
+  class="connection"
+>
+Connecting...
+</div>
+
+
+<!-- =================================================
+     HOME SCREEN
+================================================= -->
 
 <div id="homeScreen">
 
 <div class="card">
 
-<h2>🎮 Welcome</h2>
+<h2>
+🎮 Welcome
+</h2>
+
+<div class="info">
 
 <p>
-Create a game and become the Controller,
-or join an existing game.
+Create a Bingo game and become the
+<strong>Controller</strong>.
 </p>
+
+<p>
+Other players can join using the
+<strong>Game ID</strong>.
+</p>
+
+<p>
+👑 Controller controls the numbers.
+</p>
+
+<p>
+👤 Players receive their own Bingo card.
+</p>
+
+</div>
 
 <button
   id="createButton"
@@ -416,12 +657,17 @@ or join an existing game.
 
 </div>
 
+
 <div class="card">
 
-<h3>👥 JOIN GAME</h3>
+<h3>
+👥 JOIN GAME
+</h3>
 
 <input
   id="gameIdInput"
+  type="text"
+  inputmode="numeric"
   placeholder="Enter Game ID"
 >
 
@@ -437,7 +683,9 @@ or join an existing game.
 </div>
 
 
-<!-- CONTROLLER -->
+<!-- =================================================
+     CONTROLLER SCREEN
+================================================= -->
 
 <div id="controllerScreen">
 
@@ -447,12 +695,17 @@ or join an existing game.
 
 </div>
 
+
 <div class="card">
 
-<h3>🎱 GAME CONTROLLER</h3>
+<h3>
+🎱 GAME CONTROLLER
+</h3>
 
-<div class="controller-number"
-     id="controllerNumber">
+<div
+  id="controllerNumber"
+  class="controller-number"
+>
 —
 </div>
 
@@ -470,11 +723,13 @@ LAST CALLED
 
 </div>
 
+
 <button
   id="callButton"
 >
 🔢 CALL NUMBER
 </button>
+
 
 <button
   id="autoCallButton"
@@ -483,27 +738,35 @@ LAST CALLED
 ▶️ START AUTO CALL
 </button>
 
+
 <div
-  class="auto-status"
   id="autoStatus"
+  class="auto-status"
 >
-Auto Call OFF
+🔴 Auto Call OFF
 </div>
 
-<div>
+
+<div class="game-id">
+
 Game ID:
+
 <strong
   id="controllerGameId"
 >
 —
 </strong>
+
 </div>
 
 </div>
+
 
 <div class="card">
 
-<h3>👥 PLAYERS</h3>
+<h3>
+👥 PLAYERS
+</h3>
 
 <div id="playersList">
 No players yet.
@@ -511,9 +774,12 @@ No players yet.
 
 </div>
 
+
 <div class="card">
 
-<h3>📢 CALLED NUMBERS</h3>
+<h3>
+📢 CALLED NUMBERS
+</h3>
 
 <div
   id="controllerCalled"
@@ -525,7 +791,9 @@ No players yet.
 </div>
 
 
-<!-- PLAYER -->
+<!-- =================================================
+     PLAYER SCREEN
+================================================= -->
 
 <div id="gameScreen">
 
@@ -535,24 +803,44 @@ No players yet.
 
 </div>
 
+
 <div class="card">
 
-<h3>🎟️ YOUR BINGO CARD</h3>
+<h3>
+🎟️ YOUR BINGO CARD
+</h3>
+
 
 <div class="bingo-grid">
 
-<div class="bingo-letter">B</div>
-<div class="bingo-letter">I</div>
-<div class="bingo-letter">N</div>
-<div class="bingo-letter">G</div>
-<div class="bingo-letter">O</div>
+<div class="bingo-letter">
+B
+</div>
+
+<div class="bingo-letter">
+I
+</div>
+
+<div class="bingo-letter">
+N
+</div>
+
+<div class="bingo-letter">
+G
+</div>
+
+<div class="bingo-letter">
+O
+</div>
 
 </div>
+
 
 <div
   id="bingoCard"
   class="bingo-grid"
 ></div>
+
 
 <button
   id="checkBingoButton"
@@ -561,6 +849,7 @@ No players yet.
 </button>
 
 </div>
+
 
 <div class="card">
 
@@ -578,20 +867,27 @@ LAST CALLED NUMBER
 
 </div>
 
-<div>
+
+<div class="game-id">
+
 Game ID:
+
 <strong
   id="playerGameId"
 >
 —
 </strong>
+
 </div>
 
 </div>
+
 
 <div class="card">
 
-<h3>📢 CALLED NUMBERS</h3>
+<h3>
+📢 CALLED NUMBERS
+</h3>
 
 <div
   id="calledNumbers"
@@ -610,9 +906,9 @@ Game ID:
 
 <script>
 
-/* =================================================
-TELEGRAM
-================================================= */
+/* =====================================================
+   TELEGRAM
+===================================================== */
 
 const tg =
   window.Telegram?.WebApp;
@@ -626,27 +922,31 @@ if (tg) {
 }
 
 
-/* =================================================
-API
-================================================= */
+/* =====================================================
+   API
+===================================================== */
 
 const API =
   window.location.origin;
 
 
-/* =================================================
-TELEGRAM USER
-================================================= */
+/* =====================================================
+   TELEGRAM USER
+===================================================== */
 
 const telegramUser =
   tg?.initDataUnsafe?.user;
 
+
 const myId =
   String(
     telegramUser?.id ||
-    "player_" +
-    Date.now()
+    (
+      "player_" +
+      Date.now()
+    )
   );
+
 
 const myName =
   telegramUser?.first_name
@@ -662,25 +962,29 @@ const myName =
     : "Player";
 
 
-/* =================================================
-STATE
-================================================= */
+/* =====================================================
+   STATE
+===================================================== */
 
 let currentGame = null;
 
 let myCard = [];
 
 let marked =
-  new Set();
+  new Set([
+    "FREE"
+  ]);
 
 let socket = null;
 
 let myRole = null;
 
+let reconnectTimer = null;
 
-/* =================================================
-MESSAGE
-================================================= */
+
+/* =====================================================
+   MESSAGE
+===================================================== */
 
 function showMessage(text) {
 
@@ -692,26 +996,29 @@ function showMessage(text) {
   element.textContent =
     text;
 
-  setTimeout(() => {
+  setTimeout(
+    () => {
 
-    if (
-      element.textContent ===
-      text
-    ) {
+      if (
+        element.textContent ===
+        text
+      ) {
 
-      element.textContent =
-        "";
+        element.textContent =
+          "";
 
-    }
+      }
 
-  }, 3000);
+    },
+    3500
+  );
 
 }
 
 
-/* =================================================
-HAPTIC
-================================================= */
+/* =====================================================
+   HAPTIC
+===================================================== */
 
 function haptic() {
 
@@ -722,31 +1029,39 @@ function haptic() {
         "medium"
       );
 
-  } catch {}
+  } catch (
+    error
+  ) {}
 
 }
 
 
-/* =================================================
-VOICE
-================================================= */
+/* =====================================================
+   VOICE
+===================================================== */
 
 function speakNumber(
   number
 ) {
 
   if (
-    !("speechSynthesis" in window)
+    !(
+      "speechSynthesis"
+      in window
+    )
   ) {
 
     return;
 
   }
 
+
   const letter =
     getLetter(number);
 
+
   window.speechSynthesis.cancel();
+
 
   const speech =
     new SpeechSynthesisUtterance(
@@ -754,6 +1069,7 @@ function speakNumber(
       " " +
       number
     );
+
 
   speech.rate =
     0.8;
@@ -767,6 +1083,7 @@ function speakNumber(
   speech.lang =
     "en-US";
 
+
   window.speechSynthesis.speak(
     speech
   );
@@ -774,58 +1091,80 @@ function speakNumber(
 }
 
 
-/* =================================================
-LETTER
-================================================= */
+/* =====================================================
+   BINGO LETTER
+===================================================== */
 
-function getLetter(number) {
+function getLetter(
+  number
+) {
 
   if (
     number <= 15
-  )
+  ) {
+
     return "B";
+
+  }
 
   if (
     number <= 30
-  )
+  ) {
+
     return "I";
+
+  }
 
   if (
     number <= 45
-  )
+  ) {
+
     return "N";
+
+  }
 
   if (
     number <= 60
-  )
+  ) {
+
     return "G";
+
+  }
 
   return "O";
 
 }
 
 
-/* =================================================
-SHUFFLE
-================================================= */
+/* =====================================================
+   SHUFFLE
+===================================================== */
 
-function shuffle(array) {
+function shuffle(
+  array
+) {
 
   const arr =
     [...array];
 
+
   for (
     let i =
       arr.length - 1;
+
     i > 0;
+
     i--
   ) {
 
     const j =
       Math.floor(
         Math.random() *
-        (i + 1)
+        (
+          i + 1
+        )
       );
+
 
     [
       arr[i],
@@ -838,19 +1177,21 @@ function shuffle(array) {
 
   }
 
+
   return arr;
 
 }
 
 
-/* =================================================
-GENERATE CARD
-================================================= */
+/* =====================================================
+   GENERATE BINGO CARD
+===================================================== */
 
 function generateCard() {
 
   const columns =
     [];
+
 
   for (
     let col = 0;
@@ -861,38 +1202,55 @@ function generateCard() {
     const start =
       col * 15 + 1;
 
+
     const numbers =
       [];
 
+
     for (
       let n = start;
+
       n < start + 15;
+
       n++
     ) {
 
-      numbers.push(n);
+      numbers.push(
+        n
+      );
 
     }
+
 
     columns.push(
       shuffle(
         numbers
-      ).slice(0, 5)
+      ).slice(
+        0,
+        5
+      )
     );
 
   }
 
-  myCard = [];
+
+  myCard =
+    [];
+
 
   for (
     let row = 0;
+
     row < 5;
+
     row++
   ) {
 
     for (
       let col = 0;
+
       col < 5;
+
       col++
     ) {
 
@@ -917,19 +1275,21 @@ function generateCard() {
 
   }
 
+
   marked =
-    new Set(
-      ["FREE"]
-    );
+    new Set([
+      "FREE"
+    ]);
+
 
   renderCard();
 
 }
 
 
-/* =================================================
-RENDER CARD
-================================================= */
+/* =====================================================
+   RENDER CARD
+===================================================== */
 
 function renderCard() {
 
@@ -938,8 +1298,10 @@ function renderCard() {
       "bingoCard"
     );
 
+
   container.innerHTML =
     "";
+
 
   myCard.forEach(
     number => {
@@ -949,14 +1311,18 @@ function renderCard() {
           "div"
         );
 
+
       cell.className =
         "bingo-number";
+
 
       cell.textContent =
         number;
 
+
       if (
-        number === "FREE"
+        number ===
+        "FREE"
       ) {
 
         cell.classList.add(
@@ -965,8 +1331,11 @@ function renderCard() {
 
       }
 
+
       if (
-        marked.has(number)
+        marked.has(
+          number
+        )
       ) {
 
         cell.classList.add(
@@ -975,19 +1344,24 @@ function renderCard() {
 
       }
 
+
       cell.onclick =
         () => {
 
           if (
-            number === "FREE"
+            number ===
+            "FREE"
           ) {
 
             return;
 
           }
 
+
           if (
-            marked.has(number)
+            marked.has(
+              number
+            )
           ) {
 
             marked.delete(
@@ -1002,11 +1376,13 @@ function renderCard() {
 
           }
 
+
           haptic();
 
           renderCard();
 
         };
+
 
       container.appendChild(
         cell
@@ -1018,13 +1394,24 @@ function renderCard() {
 }
 
 
-/* =================================================
-MARK CALLED
-================================================= */
+/* =====================================================
+   MARK CALLED NUMBERS
+===================================================== */
 
 function markCalled(
   numbers
 ) {
+
+  if (
+    !Array.isArray(
+      numbers
+    )
+  ) {
+
+    return;
+
+  }
+
 
   numbers.forEach(
     number => {
@@ -1044,14 +1431,15 @@ function markCalled(
     }
   );
 
+
   renderCard();
 
 }
 
 
-/* =================================================
-CALLED NUMBERS
-================================================= */
+/* =====================================================
+   RENDER CALLED NUMBERS
+===================================================== */
 
 function renderCalled(
   numbers,
@@ -1063,15 +1451,23 @@ function renderCalled(
       elementId
     );
 
-  if (!container)
+
+  if (!container) {
+
     return;
+
+  }
+
 
   container.innerHTML =
     "";
 
+
   for (
     let i = 1;
+
     i <= 75;
+
     i++
   ) {
 
@@ -1080,11 +1476,15 @@ function renderCalled(
         "span"
       );
 
+
     span.textContent =
       i;
 
+
     if (
-      numbers.includes(i)
+      numbers.includes(
+        i
+      )
     ) {
 
       span.classList.add(
@@ -1092,6 +1492,7 @@ function renderCalled(
       );
 
     }
+
 
     container.appendChild(
       span
@@ -1102,19 +1503,26 @@ function renderCalled(
 }
 
 
-/* =================================================
-GAME STATE
-================================================= */
+/* =====================================================
+   UPDATE GAME
+===================================================== */
 
 function updateGame(
   newGame
 ) {
 
-  if (!newGame)
+  if (
+    !newGame
+  ) {
+
     return;
+
+  }
+
 
   currentGame =
     newGame;
+
 
   const numbers =
     Array.isArray(
@@ -1122,6 +1530,7 @@ function updateGame(
     )
       ? newGame.calledNumbers
       : [];
+
 
   const last =
     numbers.length
@@ -1138,29 +1547,43 @@ function updateGame(
     "controller"
   ) {
 
-    document.getElementById(
-      "controllerGameId"
-    ).textContent =
-      newGame.id;
+    const gameId =
+      document.getElementById(
+        "controllerGameId"
+      );
+
+    if (gameId) {
+
+      gameId.textContent =
+        newGame.id;
+
+    }
+
 
     document.getElementById(
       "controllerNumber"
     ).textContent =
       last;
 
+
     document.getElementById(
       "controllerLast"
     ).textContent =
       last;
+
 
     renderCalled(
       numbers,
       "controllerCalled"
     );
 
+
     updatePlayers(
       newGame.players
     );
+
+
+    updateAutoButton();
 
   }
 
@@ -1177,15 +1600,18 @@ function updateGame(
     ).textContent =
       newGame.id;
 
+
     document.getElementById(
       "lastNumber"
     ).textContent =
       last;
 
+
     renderCalled(
       numbers,
       "calledNumbers"
     );
+
 
     markCalled(
       numbers
@@ -1196,9 +1622,9 @@ function updateGame(
 }
 
 
-/* =================================================
-PLAYERS
-================================================= */
+/* =====================================================
+   UPDATE PLAYERS
+===================================================== */
 
 function updatePlayers(
   players
@@ -1209,13 +1635,36 @@ function updatePlayers(
       "playersList"
     );
 
+
+  if (!container) {
+
+    return;
+
+  }
+
+
   container.innerHTML =
     "";
+
 
   const list =
     Object.values(
       players || {}
     );
+
+
+  if (
+    list.length ===
+    0
+  ) {
+
+    container.textContent =
+      "No players yet.";
+
+    return;
+
+  }
+
 
   list.forEach(
     player => {
@@ -1225,19 +1674,29 @@ function updatePlayers(
           "div"
         );
 
-      div.style.padding =
-        "8px";
 
-      div.textContent =
-        (
-          player.role ===
-          "controller"
-        )
-          ? "👑 " +
-            player.name +
-            " (Controller)"
-          : "👤 " +
-            player.name;
+      div.className =
+        "player-item";
+
+
+      if (
+        player.role ===
+        "controller"
+      ) {
+
+        div.textContent =
+          "👑 " +
+          player.name +
+          " — Controller";
+
+      } else {
+
+        div.textContent =
+          "👤 " +
+          player.name;
+
+      }
+
 
       container.appendChild(
         div
@@ -1249,123 +1708,293 @@ function updatePlayers(
 }
 
 
-/* =================================================
-WEBSOCKET
-================================================= */
+/* =====================================================
+   CONNECTION STATUS
+===================================================== */
 
-function connectSocket() {
+function setConnectionStatus(
+  connected
+) {
 
-  const protocol =
-    location.protocol ===
-    "https:"
-      ? "wss:"
-      : "ws:";
-
-  socket =
-    new WebSocket(
-      protocol +
-      "//" +
-      location.host
+  const element =
+    document.getElementById(
+      "connectionStatus"
     );
 
-  socket.onopen =
-    () => {
 
-      console.log(
-        "WebSocket connected"
-      );
+  if (!element) {
 
-    };
+    return;
 
-  socket.onmessage =
-    event => {
+  }
 
-      try {
 
-        const data =
-          JSON.parse(
-            event.data
-          );
+  if (
+    connected
+  ) {
 
-        if (
-          data.game
-        ) {
+    element.textContent =
+      "🟢 Server Connected";
 
-          updateGame(
-            data.game
-          );
+    element.className =
+      "connection connected";
 
-        }
+  } else {
 
-        if (
-          data.type ===
-          "NUMBER_CALLED"
-        ) {
+    element.textContent =
+      "🔴 Reconnecting...";
 
-          haptic();
+    element.className =
+      "connection disconnected";
 
-          showMessage(
-            "🔊 " +
-            data.letter +
-            " " +
-            data.number
-          );
-
-          speakNumber(
-            data.number
-          );
-
-        }
-
-        if (
-          data.type ===
-          "PLAYER_JOINED"
-        ) {
-
-          showMessage(
-            "👤 " +
-            data.player.name +
-            " joined!"
-          );
-
-        }
-
-      } catch (
-        error
-      ) {
-
-        console.error(
-          error
-        );
-
-      }
-
-    };
-
-  socket.onclose =
-    () => {
-
-      console.log(
-        "WebSocket disconnected. Reconnecting..."
-      );
-
-      setTimeout(
-        connectSocket,
-        3000
-      );
-
-    };
+  }
 
 }
 
 
-/* =================================================
-CREATE GAME
-================================================= */
+/* =====================================================
+   WEBSOCKET
+===================================================== */
+
+function connectSocket() {
+
+  try {
+
+    const protocol =
+      location.protocol ===
+      "https:"
+        ? "wss:"
+        : "ws:";
+
+
+    socket =
+      new WebSocket(
+        protocol +
+        "//" +
+        location.host
+      );
+
+
+    socket.onopen =
+      () => {
+
+        console.log(
+          "WebSocket connected"
+        );
+
+
+        setConnectionStatus(
+          true
+        );
+
+      };
+
+
+    socket.onmessage =
+      event => {
+
+        try {
+
+          const data =
+            JSON.parse(
+              event.data
+            );
+
+
+          if (
+            data.game
+          ) {
+
+            updateGame(
+              data.game
+            );
+
+          }
+
+
+          if (
+            data.type ===
+            "NUMBER_CALLED"
+          ) {
+
+            haptic();
+
+
+            showMessage(
+              "🔊 " +
+              data.letter +
+              " " +
+              data.number
+            );
+
+
+            speakNumber(
+              data.number
+            );
+
+          }
+
+
+          if (
+            data.type ===
+            "PLAYER_JOINED"
+          ) {
+
+            if (
+              myRole ===
+              "controller"
+            ) {
+
+              showMessage(
+                "👤 " +
+                data.player.name +
+                " joined!"
+              );
+
+            }
+
+          }
+
+
+          if (
+            data.type ===
+            "AUTO_CALL_CHANGED"
+          ) {
+
+            updateGame(
+              data.game
+            );
+
+          }
+
+        } catch (
+          error
+        ) {
+
+          console.error(
+            "WebSocket message error:",
+            error
+          );
+
+        }
+
+      };
+
+
+    socket.onclose =
+      () => {
+
+        setConnectionStatus(
+          false
+        );
+
+
+        clearTimeout(
+          reconnectTimer
+        );
+
+
+        reconnectTimer =
+          setTimeout(
+            connectSocket,
+            3000
+          );
+
+      };
+
+
+    socket.onerror =
+      () => {
+
+        setConnectionStatus(
+          false
+        );
+
+      };
+
+
+  } catch (
+    error
+  ) {
+
+    setConnectionStatus(
+      false
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   REFRESH GAME FROM SERVER
+===================================================== */
+
+async function refreshGame() {
+
+  try {
+
+    const response =
+      await fetch(
+        API +
+        "/api/game",
+        {
+          cache:
+            "no-store"
+        }
+      );
+
+
+    if (
+      !response.ok
+    ) {
+
+      return;
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    if (
+      data.success &&
+      data.game
+    ) {
+
+      updateGame(
+        data.game
+      );
+
+    }
+
+
+    setConnectionStatus(
+      true
+    );
+
+  } catch (
+    error
+  ) {
+
+    setConnectionStatus(
+      false
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   CREATE GAME
+===================================================== */
 
 async function createGame() {
 
   haptic();
+
 
   try {
 
@@ -1379,8 +2008,10 @@ async function createGame() {
             "POST",
 
           headers: {
+
             "Content-Type":
               "application/json"
+
           },
 
           body:
@@ -1397,49 +2028,67 @@ async function createGame() {
         }
       );
 
+
     const data =
       await response.json();
 
+
     if (
+      !response.ok ||
       !data.success
     ) {
 
       showMessage(
-        data.message
+        data.message ||
+        "Could not create game."
       );
 
       return;
 
     }
 
+
     myRole =
       "controller";
 
+
     currentGame =
       data.game;
+
 
     document.getElementById(
       "homeScreen"
     ).style.display =
       "none";
 
+
     document.getElementById(
       "controllerScreen"
     ).style.display =
       "block";
 
+
     updateGame(
       currentGame
     );
+
 
     showMessage(
       "🎉 Game created!"
     );
 
-  } catch {
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      error
+    );
+
 
     showMessage(
-      "❌ Server error."
+      "❌ Server connection failed."
     );
 
   }
@@ -1447,9 +2096,9 @@ async function createGame() {
 }
 
 
-/* =================================================
-JOIN GAME
-================================================= */
+/* =====================================================
+   JOIN GAME
+===================================================== */
 
 async function joinGame() {
 
@@ -1458,8 +2107,10 @@ async function joinGame() {
       "gameIdInput"
     );
 
+
   const gameId =
     input.value.trim();
+
 
   if (!gameId) {
 
@@ -1471,7 +2122,9 @@ async function joinGame() {
 
   }
 
+
   haptic();
+
 
   try {
 
@@ -1485,8 +2138,10 @@ async function joinGame() {
             "POST",
 
           headers: {
+
             "Content-Type":
               "application/json"
+
           },
 
           body:
@@ -1505,337 +2160,53 @@ async function joinGame() {
         }
       );
 
+
     const data =
       await response.json();
 
+
     if (
+      !response.ok ||
       !data.success
     ) {
 
       showMessage(
-        data.message
+        data.message ||
+        "Could not join game."
       );
 
       return;
 
     }
+
 
     myRole =
-      data.role;
+      data.role ||
+      "player";
+
 
     currentGame =
       data.game;
 
-    generateCard();
 
-    document.getElementById(
-      "homeScreen"
-    ).style.display =
-      "none";
-
-    document.getElementById(
-      "gameScreen"
-    ).style.display =
-      "block";
-
-    updateGame(
-      currentGame
-    );
-
-    showMessage(
-      "🎮 Joined!"
-    );
-
-  } catch {
-
-    showMessage(
-      "❌ Server connection failed."
-    );
-
-  }
-
-}
-
-
-/* =================================================
-CALL NUMBER
-================================================= */
-
-async function callNumber() {
-
-  try {
-
-    const response =
-      await fetch(
-        API +
-        "/api/game/call",
-        {
-
-          method:
-            "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-
-              controllerId:
-                myId
-
-            })
-
-        }
-      );
-
-    const data =
-      await response.json();
+    /* Controller cannot receive player card */
 
     if (
-      !data.success
+      myRole ===
+      "controller"
     ) {
 
-      showMessage(
-        data.message
-      );
+      document.getElementById(
+        "homeScreen"
+      ).style.display =
+        "none";
 
-      return;
 
-    }
+      document.getElementById(
+        "controllerScreen"
+      ).style.display =
+        "block";
 
-  } catch {
 
-    showMessage(
-      "❌ Call failed."
-    );
-
-  }
-
-}
-
-
-/* =================================================
-AUTO CALL
-================================================= */
-
-async function toggleAutoCall() {
-
-  const enabled =
-    !currentGame?.autoCall;
-
-  try {
-
-    const response =
-      await fetch(
-        API +
-        "/api/game/auto-call",
-        {
-
-          method:
-            "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-
-              controllerId:
-                myId,
-
-              enabled
-
-            })
-
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if (
-      !data.success
-    ) {
-
-      showMessage(
-        data.message
-      );
-
-      return;
-
-    }
-
-    currentGame =
-      data.game;
-
-    updateAutoButton();
-
-  } catch {
-
-    showMessage(
-      "❌ Auto Call error."
-    );
-
-  }
-
-}
-
-
-/* =================================================
-AUTO BUTTON UI
-================================================= */
-
-function updateAutoButton() {
-
-  const button =
-    document.getElementById(
-      "autoCallButton"
-    );
-
-  const status =
-    document.getElementById(
-      "autoStatus"
-    );
-
-  if (
-    currentGame?.autoCall
-  ) {
-
-    button.textContent =
-      "⏹ STOP AUTO CALL";
-
-    status.textContent =
-      "🟢 Auto Call ON — every 5 seconds";
-
-  } else {
-
-    button.textContent =
-      "▶️ START AUTO CALL";
-
-    status.textContent =
-      "🔴 Auto Call OFF";
-
-  }
-
-}
-
-
-/* =================================================
-CHECK BINGO
-================================================= */
-
-function checkBingo() {
-
-  const lines = [
-
-    [0,1,2,3,4],
-
-    [5,6,7,8,9],
-
-    [10,11,12,13,14],
-
-    [15,16,17,18,19],
-
-    [20,21,22,23,24],
-
-    [0,5,10,15,20],
-
-    [1,6,11,16,21],
-
-    [2,7,12,17,22],
-
-    [3,8,13,18,23],
-
-    [4,9,14,19,24],
-
-    [0,6,12,18,24],
-
-    [4,8,12,16,20]
-
-  ];
-
-  const bingo =
-    lines.some(
-      line =>
-        line.every(
-          index =>
-            marked.has(
-              myCard[index]
-            )
-        )
-    );
-
-  if (bingo) {
-
-    haptic();
-
-    showMessage(
-      "🏆 BINGO! CONGRATULATIONS!"
-    );
-
-  } else {
-
-    showMessage(
-      "❌ Not Bingo yet."
-    );
-
-  }
-
-}
-
-
-/* =================================================
-BUTTONS
-================================================= */
-
-document
-  .getElementById(
-    "createButton"
-  )
-  .onclick =
-    createGame;
-
-document
-  .getElementById(
-    "joinButton"
-  )
-  .onclick =
-    joinGame;
-
-document
-  .getElementById(
-    "callButton"
-  )
-  .onclick =
-    callNumber;
-
-document
-  .getElementById(
-    "autoCallButton"
-  )
-  .onclick =
-    toggleAutoCall;
-
-document
-  .getElementById(
-    "checkBingoButton"
-  )
-  .onclick =
-    checkBingo;
-
-
-/* =================================================
-START
-================================================= */
-
-connectSocket();
-
-</script>
-
-</body>
-
-</html>
+      updateGame(
+        current
