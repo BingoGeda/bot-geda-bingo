@@ -1,7 +1,7 @@
 {
   "name": "bot-geda-bingo-server",
   "version": "1.0.0",
-  "description": "Bingo Geda game server",
+  "description": "Bingo Geda multiplayer game server",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
