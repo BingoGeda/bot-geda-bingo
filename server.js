@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-const path = require("path");
 const { Pool } = require("pg");
 
 const app = express();
@@ -8,20 +7,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ======================================
-// PORT
-// ======================================
-
 const PORT = process.env.PORT || 10000;
 
 // ======================================
 // POSTGRESQL
 // ======================================
-
-if (!process.env.DATABASE_URL) {
-  console.error("❌ DATABASE_URL is not set.");
-  process.exit(1);
-}
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -30,89 +20,63 @@ const pool = new Pool({
   }
 });
 
-pool.on("error", (err) => {
-  console.error("❌ PostgreSQL pool error:", err);
-});
-
-// ======================================
-// SERVE MINI APP
-// ======================================
-
-app.use(express.static(__dirname));
-
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
-
-// ======================================
-// DATABASE SETUP
-// ======================================
-
-async function setupDatabase() {
-
+async function initDatabase() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS games (
       id TEXT PRIMARY KEY,
+      called_numbers INTEGER[] NOT NULL DEFAULT '{}',
       status TEXT NOT NULL DEFAULT 'waiting',
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
-  `);
 
-  await pool.query(`
     CREATE TABLE IF NOT EXISTS players (
       id TEXT NOT NULL,
       game_id TEXT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
-      name TEXT NOT NULL DEFAULT 'Player',
+      name TEXT NOT NULL,
       joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       PRIMARY KEY (id, game_id)
     );
   `);
 
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS called_numbers (
-      game_id TEXT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
-      number INTEGER NOT NULL CHECK (number >= 1 AND number <= 75),
-      called_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      PRIMARY KEY (game_id, number)
-    );
-  `);
-
-  // Create first game if none exists
-  const result = await pool.query(`
-    SELECT id
-    FROM games
-    ORDER BY created_at DESC
-    LIMIT 1
-  `);
-
-  if (result.rows.length === 0) {
-
-    const id = Date.now().toString();
-
-    await pool.query(
-      `
-      INSERT INTO games (id, status)
-      VALUES ($1, 'waiting')
-      `,
-      [id]
-    );
-
-    console.log("🎱 First Bingo game created:", id);
-  }
-
-  console.log("✅ PostgreSQL database ready.");
+  console.log("✅ PostgreSQL database initialized");
 }
 
 // ======================================
-// GET FULL GAME
+// STATIC MINI APP
 // ======================================
 
-async function getGame(gameId) {
+app.use(express.static(__dirname));
 
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/index.html");
+});
+
+// ======================================
+// HELPERS
+// ======================================
+
+async function createNewGame() {
+  const id = Date.now().toString();
+
+  await pool.query(
+    `
+    INSERT INTO games
+      (id, called_numbers, status)
+    VALUES
+      ($1, '{}', 'waiting')
+    `,
+    [id]
+  );
+
+  return getGame(id);
+}
+
+async function getGame(gameId) {
   const gameResult = await pool.query(
     `
     SELECT
       id,
+      called_numbers,
       status,
       created_at
     FROM games
@@ -125,9 +89,8 @@ async function getGame(gameId) {
     return null;
   }
 
-  const gameRow = gameResult.rows[0];
+  const row = gameResult.rows[0];
 
-  // Players
   const playersResult = await pool.query(
     `
     SELECT
@@ -143,57 +106,21 @@ async function getGame(gameId) {
 
   const players = {};
 
-  for (const player of playersResult.rows) {
-
+  playersResult.rows.forEach(player => {
     players[player.id] = {
       id: player.id,
       name: player.name,
       joinedAt: player.joined_at
     };
-
-  }
-
-  // Called numbers
-  const numbersResult = await pool.query(
-    `
-    SELECT number
-    FROM called_numbers
-    WHERE game_id = $1
-    ORDER BY called_at ASC
-    `,
-    [gameId]
-  );
-
-  const calledNumbers =
-    numbersResult.rows.map(row => row.number);
+  });
 
   return {
-    id: gameRow.id,
-    calledNumbers,
-    status: gameRow.status,
+    id: row.id,
+    calledNumbers: row.called_numbers || [],
+    status: row.status,
     players,
-    createdAt: gameRow.created_at
+    createdAt: row.created_at
   };
-}
-
-// ======================================
-// GET CURRENT GAME
-// ======================================
-
-async function getCurrentGame() {
-
-  const result = await pool.query(`
-    SELECT id
-    FROM games
-    ORDER BY created_at DESC
-    LIMIT 1
-  `);
-
-  if (result.rows.length === 0) {
-    return null;
-  }
-
-  return getGame(result.rows[0].id);
 }
 
 // ======================================
@@ -201,9 +128,7 @@ async function getCurrentGame() {
 // ======================================
 
 app.get("/api/health", async (req, res) => {
-
   try {
-
     await pool.query("SELECT 1");
 
     res.json({
@@ -216,7 +141,7 @@ app.get("/api/health", async (req, res) => {
 
   } catch (error) {
 
-    console.error("HEALTH ERROR:", error);
+    console.error("DATABASE ERROR:", error);
 
     res.status(500).json({
       success: false,
@@ -224,29 +149,35 @@ app.get("/api/health", async (req, res) => {
       server: "Bingo Geda",
       database: "disconnected"
     });
-
   }
-
 });
 
 // ======================================
-// GET CURRENT GAME
+// CURRENT GAME
 // ======================================
 
 app.get("/api/game", async (req, res) => {
 
   try {
 
-    const game = await getCurrentGame();
+    const result = await pool.query(`
+      SELECT id
+      FROM games
+      ORDER BY created_at DESC
+      LIMIT 1
+    `);
 
-    if (!game) {
+    if (result.rows.length === 0) {
 
-      return res.status(404).json({
-        success: false,
-        message: "No Bingo game exists."
+      const newGame = await createNewGame();
+
+      return res.json({
+        success: true,
+        game: newGame
       });
-
     }
+
+    const game = await getGame(result.rows[0].id);
 
     res.json({
       success: true,
@@ -255,15 +186,13 @@ app.get("/api/game", async (req, res) => {
 
   } catch (error) {
 
-    console.error("GET GAME ERROR:", error);
+    console.error(error);
 
     res.status(500).json({
       success: false,
-      message: "Database error."
+      message: "Could not load game."
     });
-
   }
-
 });
 
 // ======================================
@@ -274,21 +203,11 @@ app.post("/api/game/new", async (req, res) => {
 
   try {
 
-    const id = Date.now().toString();
+    const game = await createNewGame();
 
-    await pool.query(
-      `
-      INSERT INTO games (id, status)
-      VALUES ($1, 'waiting')
-      `,
-      [id]
-    );
+    console.log("🎱 New game:", game.id);
 
-    const game = await getGame(id);
-
-    console.log("🎱 New game created:", id);
-
-    res.status(201).json({
+    res.json({
       success: true,
       message: "New Bingo game created!",
       game
@@ -296,15 +215,13 @@ app.post("/api/game/new", async (req, res) => {
 
   } catch (error) {
 
-    console.error("CREATE GAME ERROR:", error);
+    console.error(error);
 
     res.status(500).json({
       success: false,
       message: "Could not create game."
     });
-
   }
-
 });
 
 // ======================================
@@ -315,20 +232,15 @@ app.post("/api/game/join", async (req, res) => {
 
   try {
 
-    const gameId =
-      String(req.body.gameId || "");
+    const gameId = String(req.body.gameId || "");
 
-    const playerId =
-      String(
-        req.body.playerId ||
-        "player_" + Date.now()
-      );
+    const playerId = String(
+      req.body.playerId ||
+      "player_" + Date.now()
+    );
 
     const playerName =
-      String(
-        req.body.name ||
-        "Player"
-      );
+      String(req.body.name || "Player");
 
     if (!gameId) {
 
@@ -336,30 +248,19 @@ app.post("/api/game/join", async (req, res) => {
         success: false,
         message: "Game ID is required."
       });
-
     }
 
-    // Check game
-    const gameResult = await pool.query(
-      `
-      SELECT id
-      FROM games
-      WHERE id = $1
-      `,
-      [gameId]
-    );
+    const game = await getGame(gameId);
 
-    if (gameResult.rows.length === 0) {
+    if (!game) {
 
       return res.status(404).json({
         success: false,
         message: "Game not found.",
         gameId
       });
-
     }
 
-    // Add player
     await pool.query(
       `
       INSERT INTO players
@@ -369,14 +270,9 @@ app.post("/api/game/join", async (req, res) => {
       ON CONFLICT (id, game_id)
       DO UPDATE SET name = EXCLUDED.name
       `,
-      [
-        playerId,
-        gameId,
-        playerName
-      ]
+      [playerId, gameId, playerName]
     );
 
-    // Set playing
     await pool.query(
       `
       UPDATE games
@@ -386,45 +282,38 @@ app.post("/api/game/join", async (req, res) => {
       [gameId]
     );
 
-    const game =
-      await getGame(gameId);
+    const updatedGame = await getGame(gameId);
 
     console.log(
-      `👤 ${playerName} joined game ${gameId}`
+      `👤 ${playerName} joined ${gameId}`
     );
 
     res.json({
       success: true,
       message: "Player joined Bingo Geda!",
-      player: game.players[playerId],
-      game
+      game: updatedGame
     });
 
   } catch (error) {
 
-    console.error("JOIN GAME ERROR:", error);
+    console.error(error);
 
     res.status(500).json({
       success: false,
       message: "Could not join game."
     });
-
   }
-
 });
 
 // ======================================
-// CALL NEXT BINGO NUMBER
+// CALL NUMBER
 // ======================================
 
 app.post("/api/game/call", async (req, res) => {
 
-  const client = await pool.connect();
-
   try {
 
-    const gameId =
-      String(req.body.gameId || "");
+    const gameId = String(req.body.gameId || "");
 
     if (!gameId) {
 
@@ -432,78 +321,42 @@ app.post("/api/game/call", async (req, res) => {
         success: false,
         message: "Game ID is required."
       });
-
     }
 
-    await client.query("BEGIN");
+    const game = await getGame(gameId);
 
-    // Check game
-    const gameResult =
-      await client.query(
-        `
-        SELECT id, status
-        FROM games
-        WHERE id = $1
-        FOR UPDATE
-        `,
-        [gameId]
-      );
-
-    if (gameResult.rows.length === 0) {
-
-      await client.query("ROLLBACK");
+    if (!game) {
 
       return res.status(404).json({
         success: false,
         message: "Game not found."
       });
-
     }
 
-    const gameRow =
-      gameResult.rows[0];
-
-    if (gameRow.status === "finished") {
-
-      await client.query("ROLLBACK");
+    if (game.status === "finished") {
 
       return res.status(400).json({
         success: false,
-        message: "Game is already finished."
+        message: "Game is already finished.",
+        game
       });
-
     }
 
-    // Get called numbers
-    const calledResult =
-      await client.query(
-        `
-        SELECT number
-        FROM called_numbers
-        WHERE game_id = $1
-        `,
-        [gameId]
-      );
-
-    const calledNumbers =
-      calledResult.rows.map(
-        row => Number(row.number)
-      );
-
-    // Available numbers
-    const availableNumbers =
+    const allNumbers =
       Array.from(
         { length: 75 },
         (_, i) => i + 1
-      ).filter(
-        number =>
-          !calledNumbers.includes(number)
       );
 
-    // All numbers called
-    if (availableNumbers.length === 0) {
+    const available =
+      allNumbers.filter(
+        number =>
+          !game.calledNumbers.includes(number)
+      );
 
-      await client.query(
+    if (available.length === 0) {
+
+      await pool.query(
         `
         UPDATE games
         SET status = 'finished'
@@ -512,128 +365,92 @@ app.post("/api/game/call", async (req, res) => {
         [gameId]
       );
 
-      await client.query("COMMIT");
-
-      const game =
-        await getGame(gameId);
-
       return res.json({
         success: false,
-        message:
-          "All Bingo numbers have been called.",
-        game
+        message: "All Bingo numbers have been called."
       });
-
     }
 
-    // Random number
-    const randomIndex =
-      Math.floor(
-        Math.random() *
-        availableNumbers.length
-      );
-
     const number =
-      availableNumbers[randomIndex];
+      available[
+        Math.floor(
+          Math.random() * available.length
+        )
+      ];
 
-    // Save number
-    await client.query(
-      `
-      INSERT INTO called_numbers
-        (game_id, number)
-      VALUES
-        ($1, $2)
-      `,
-      [gameId, number]
-    );
+    const newNumbers = [
+      ...game.calledNumbers,
+      number
+    ];
 
-    // Set playing
-    await client.query(
+    await pool.query(
       `
       UPDATE games
-      SET status = 'playing'
-      WHERE id = $1
+      SET
+        called_numbers = $1,
+        status = 'playing'
+      WHERE id = $2
       `,
-      [gameId]
+      [newNumbers, gameId]
     );
 
-    await client.query("COMMIT");
-
-    const game =
+    const updatedGame =
       await getGame(gameId);
 
     console.log(
-      `🔢 Game ${gameId}: Number called ${number}`
+      `🔢 ${number} called in ${gameId}`
     );
 
     res.json({
       success: true,
       number,
-      calledNumbers: game.calledNumbers,
-      game
+      calledNumbers: newNumbers,
+      game: updatedGame
     });
 
   } catch (error) {
 
-    await client.query("ROLLBACK");
-
-    console.error(
-      "CALL NUMBER ERROR:",
-      error
-    );
+    console.error(error);
 
     res.status(500).json({
       success: false,
       message: "Could not call number."
     });
-
-  } finally {
-
-    client.release();
-
   }
-
 });
 
 // ======================================
-// GET CALLED NUMBERS
+// CALLED NUMBERS
 // ======================================
 
 app.get("/api/game/numbers", async (req, res) => {
 
   try {
 
-    const game =
-      await getCurrentGame();
+    const result = await pool.query(`
+      SELECT called_numbers
+      FROM games
+      ORDER BY created_at DESC
+      LIMIT 1
+    `);
 
-    if (!game) {
-
-      return res.status(404).json({
-        success: false,
-        message: "No game found."
-      });
-
-    }
+    const numbers =
+      result.rows[0]?.called_numbers || [];
 
     res.json({
       success: true,
-      calledNumbers: game.calledNumbers
+      calledNumbers: numbers
     });
 
   } catch (error) {
 
-    console.error(
-      "NUMBERS ERROR:",
-      error
-    );
+    console.error(error);
 
     res.status(500).json({
       success: false,
-      message: "Database error."
+      message: "Could not load numbers."
     });
-
   }
-
 });
 
 // ======================================
@@ -644,64 +461,37 @@ app.post("/api/game/leave", async (req, res) => {
 
   try {
 
-    const gameId =
-      String(req.body.gameId || "");
-
     const playerId =
       String(req.body.playerId || "");
 
-    if (!gameId || !playerId) {
+    const gameId =
+      String(req.body.gameId || "");
 
-      return res.status(400).json({
-        success: false,
-        message:
-          "Game ID and Player ID are required."
-      });
+    if (playerId && gameId) {
 
-    }
-
-    await pool.query(
-      `
-      DELETE FROM players
-      WHERE game_id = $1
-      AND id = $2
-      `,
-      [
-        gameId,
-        playerId
-      ]
-    );
-
-    // Count players
-    const countResult =
       await pool.query(
         `
-        SELECT COUNT(*)::int AS count
-        FROM players
-        WHERE game_id = $1
+        DELETE FROM players
+        WHERE id = $1
+        AND game_id = $2
         `,
-        [gameId]
+        [playerId, gameId]
       );
+    }
 
-    const playerCount =
-      countResult.rows[0].count;
+    const game = await getGame(gameId);
 
-    if (playerCount === 0) {
+    if (game && Object.keys(game.players).length === 0) {
 
       await pool.query(
         `
         UPDATE games
         SET status = 'waiting'
         WHERE id = $1
-        AND status != 'finished'
         `,
         [gameId]
       );
-
     }
-
-    const game =
-      await getGame(gameId);
 
     res.json({
       success: true,
@@ -711,18 +501,13 @@ app.post("/api/game/leave", async (req, res) => {
 
   } catch (error) {
 
-    console.error(
-      "LEAVE GAME ERROR:",
-      error
-    );
+    console.error(error);
 
     res.status(500).json({
       success: false,
       message: "Could not leave game."
     });
-
   }
-
 });
 
 // ======================================
@@ -733,67 +518,70 @@ app.get("/api/game/status", async (req, res) => {
 
   try {
 
-    const game =
-      await getCurrentGame();
+    const result = await pool.query(`
+      SELECT
+        id,
+        status,
+        called_numbers
+      FROM games
+      ORDER BY created_at DESC
+      LIMIT 1
+    `);
 
-    if (!game) {
+    if (result.rows.length === 0) {
 
-      return res.status(404).json({
-        success: false,
-        message: "No game found."
+      return res.json({
+        success: true,
+        status: "waiting",
+        players: 0,
+        calledNumbers: 0,
+        gameId: null
       });
-
     }
+
+    const row = result.rows[0];
+
+    const players =
+      await pool.query(
+        `
+        SELECT COUNT(*)
+        FROM players
+        WHERE game_id = $1
+        `,
+        [row.id]
+      );
 
     res.json({
       success: true,
-      status: game.status,
-      players:
-        Object.keys(game.players).length,
+      status: row.status,
+      players: Number(players.rows[0].count),
       calledNumbers:
-        game.calledNumbers.length,
-      gameId: game.id
+        (row.called_numbers || []).length,
+      gameId: row.id
     });
 
   } catch (error) {
 
-    console.error(
-      "STATUS ERROR:",
-      error
-    );
+    console.error(error);
 
     res.status(500).json({
       success: false,
-      message: "Database error."
+      message: "Could not load status."
     });
-
   }
-
 });
 
 // ======================================
-// RESET / CREATE NEW GAME
+// RESET
 // ======================================
 
 app.post("/api/game/reset", async (req, res) => {
 
   try {
 
-    const id =
-      Date.now().toString();
+    await pool.query("DELETE FROM games");
 
-    await pool.query(
-      `
-      INSERT INTO games
-        (id, status)
-      VALUES
-        ($1, 'waiting')
-      `,
-      [id]
-    );
-
-    const game =
-      await getGame(id);
+    const game = await createNewGame();
 
     res.json({
       success: true,
@@ -803,22 +591,17 @@ app.post("/api/game/reset", async (req, res) => {
 
   } catch (error) {
 
-    console.error(
-      "RESET ERROR:",
-      error
-    );
+    console.error(error);
 
     res.status(500).json({
       success: false,
       message: "Could not reset game."
     });
-
   }
-
 });
 
 // ======================================
-// API 404
+// 404
 // ======================================
 
 app.use("/api", (req, res) => {
@@ -838,16 +621,12 @@ async function startServer() {
 
   try {
 
-    await setupDatabase();
+    await initDatabase();
 
     app.listen(PORT, () => {
 
       console.log(
         `🎱 Bingo Geda server running on port ${PORT}`
-      );
-
-      console.log(
-        `🌐 Port: ${PORT}`
       );
 
     });
@@ -860,9 +639,7 @@ async function startServer() {
     );
 
     process.exit(1);
-
   }
-
 }
 
 startServer();
